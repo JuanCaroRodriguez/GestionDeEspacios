@@ -2,56 +2,75 @@ import axios from "./axios";
 
 export const API_PROTOTYPES = Object.freeze({
   auth: Object.freeze({
-    register: async (newUser) => {
+    registerAdmin: async (newUser) => {
       try {
-        const response = await axios.post(`/user`, newUser);
+        const response = await axios.post(`/personas/register/admin`, newUser);
         return response.data;
       } catch (error) {
-        console.error("Error en el registro:", error);
+        console.error("Error en el registro de administrador:", error);
+        throw error;
+      }
+    },
+    registerEstudiante: async (newUser) => {
+      try {
+        const response = await axios.post(
+          `/personas/register/estudiante`,
+          newUser,
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Error en el registro de estudiante:", error);
+        throw error;
+      }
+    },
+    registerDocente: async (newUser) => {
+      try {
+        const response = await axios.post(
+          `/personas/register/docente`,
+          newUser,
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Error en el registro de docente:", error);
         throw error;
       }
     },
     login: async (user) => {
       try {
-        const response = await axios.post(`/login`, user);
+        console.log("Services - Sending login request with data:", user); // Debug services
+        const response = await axios.post(`/auth/login`, user);
+        console.log("Services - Login response:", response.data); // Debug response
         return response.data;
       } catch (error) {
         console.error("Error en el inicio de sesión:", error);
+        console.log("Services - Error details:", error.response?.data); // Debug error details
         throw error;
       }
     },
     getAll: async () => {
       try {
-        const response = await axios.get(`/users`);
+        const response = await axios.get(`/personas/all`);
         return response.data;
       } catch (error) {
-        console.error("Error en el inicio de sesión:", error);
+        console.error("Error al obtener personas:", error);
         throw error;
       }
     },
-    logout: async () => {
+    getProfile: async (id) => {
       try {
-        const response = await axios.get(`/logout`);
+        const response = await axios.get(`/personas/profile/${id}`);
         return response.data;
       } catch (error) {
-        console.error("Error en el inicio de sesión:", error);
+        console.error("Error al obtener perfil:", error);
         throw error;
       }
     },
-    verify: async () => {
+    updateProfile: async (id, user) => {
       try {
-        const response = await axios.get(`/verify`);
+        const response = await axios.put(`/personas/profile/${id}`, user);
         return response.data;
       } catch (error) {
-        console.log(error);
-      }
-    },
-    update: async (user) => {
-      try {
-        const response = await axios.put(`/user`, user);
-        return response.data;
-      } catch (error) {
-        console.error("Error en el inicio de sesión:", error);
+        console.error("Error al actualizar perfil:", error);
         throw error;
       }
     },

@@ -19,16 +19,21 @@ function SessionState({ children }) {
       setLoading(true)
       const response = await API_PROTOTYPES.auth.login(data)
       setLoading(false)
-      if (response?.token) {
+      
+      console.log('Login response:', response); // Debug
+      
+      if (response && (response.success || response.token || response.user)) {
         guardarEnLocalStorage('session', response)
         setSession(response)
         navigate(ROUTES.dashboard.home)
+      } else {
+        console.error('Login failed - invalid response:', response)
       }
-
 
       return response
     } catch (error) {
       setLoading(false)
+      console.error('Login error:', error)
       return error
     }
 
@@ -59,13 +64,20 @@ function SessionState({ children }) {
     const session = await AuthToken()
     const isAuthRute=window.location.pathname === ROUTES.auth.login || window.location.pathname === ROUTES.auth.register || window.location.pathname === ROUTES.auth.welcome
   
+    console.log('AuthVerify - Session:', session); // Debug
+    console.log('AuthVerify - isAuthRoute:', isAuthRute); // Debug
+    console.log('AuthVerify - current path:', window.location.pathname); // Debug
+  
     if (isAuthRute && session) {
+      console.log('Redirecting to dashboard...'); // Debug
       setSession(session)
       navigate(ROUTES.dashboard.home)
     }else if (!isAuthRute && !session) {
+      console.log('Redirecting to welcome...'); // Debug
       setSession(null)
       navigate(ROUTES.auth.welcome)
     }else{
+      console.log('Setting session...'); // Debug
       setSession(session)
     }
   }, [navigate])

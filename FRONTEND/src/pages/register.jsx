@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useFormValidate } from 'use-form-validate';
 import Logo from '../assets/LogoIsoft.png';
 import useSession from '../context/Auth/useSession';
-import { ROUTES } from '../tools/CONSTANTS';
+import { ROUTES, ROL } from '../tools/CONSTANTS';
+import { API_PROTOTYPES } from '../api/services';
 
 import SweetAlert2 from 'react-sweetalert2';
 
@@ -24,36 +25,53 @@ function Register() {
 
   const onSubmit = (formData) => {
     console.log(formData)
-    handleSignUp(formData)
-      .then(({ response }) => {
-        if (response.status === 200) {
-          resetForm()
+    let registerPromise;
+    
+    // Seleccionar el método de registro según el rol
+    switch(formData.role) {
+      case 'administrador':
+        registerPromise = API_PROTOTYPES.auth.registerAdmin({
+          nombre: formData.name,
+          email: formData.email,
+          contraseña: formData.password
+        });
+        break;
+      case 'estudiante':
+        registerPromise = API_PROTOTYPES.auth.registerEstudiante({
+          nombre: formData.name,
+          email: formData.email,
+          contraseña: formData.password
+        });
+        break;
+      case 'docente':
+        registerPromise = API_PROTOTYPES.auth.registerDocente({
+          nombre: formData.name,
+          email: formData.email,
+          contraseña: formData.password
+        });
+        break;
+      default:
+        setResponseError('Por favor selecciona un rol válido');
+        return;
+    }
 
-          setSwalProps({
-            show: true,
-            title: "Registro exitoso",
-            text: "Se ha registrado correctamente",
-            icon: "success",
-          });
-          setAlertKey(alertKey + 1); // Forzar re-render
-
-
-        } else {
-          console.log(response)
-          if (response.data.message) {
-            setResponseError(response.data.message)
-          } else {
-            console.error(response)
-          }
-        }
+    registerPromise
+      .then((response) => {
+        resetForm()
+        setSwalProps({
+          show: true,
+          title: "Registro exitoso",
+          text: "Se ha registrado correctamente",
+          icon: "success",
+        });
+        setAlertKey(alertKey + 1);
       })
       .catch((error) => {
-        if (error.response.data) {
-          if (error.response.data.message) {
-            alert(error.response.data.message)
-          } else {
-            console.error(error)
-          }
+        if (error.response?.data?.message) {
+          setResponseError(error.response.data.message)
+        } else {
+          setResponseError('Error en el registro');
+          console.error(error)
         }
       })
   };
@@ -70,11 +88,13 @@ function Register() {
           <h1 className="text-2xl font-bold mb-6 text-center text-slate-800">Registrate</h1>
           
           <select
-            {...getFieldProps("role", { required: true }, undefined, 'usuario')}
-            className={`w-full p-2 mb-1 mt-3 border ${errors['rol'] ? 'border-red-500' : 'border-gray-300'}  rounded`}
+            {...getFieldProps("role", { required: true }, undefined, '')}
+            className={`w-full p-2 mb-1 mt-3 border ${errors['role'] ? 'border-red-500' : 'border-gray-300'}  rounded`}
           >
-            <option value="usuario">Estudiante/Profesor</option>
-            <option value="administrativo">administrativo</option>
+            <option value="">Selecciona un rol</option>
+            <option value="administrador">Administrador</option>
+            <option value="estudiante">Estudiante</option>
+            <option value="docente">Docente</option>
           </select>
 
           <p className="text-red-500">{getFieldError("rol")}</p>

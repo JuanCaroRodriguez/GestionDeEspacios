@@ -17,15 +17,18 @@ const Login = () => {
     const { handleLogin, loading_auth } = useSession()
 
     const onSubmit = (formData) => {
+        console.log('Frontend - Submitting form data:', formData); // Debug frontend
         handleLogin(formData)
             .then((response) => {
+                console.log('Frontend - Login response:', response); // Debug response
                 if(response){
                     resetForm()
                 }
             })
             .catch((error) => {
-                console.log(error)
-                if (error.response.data) {
+                console.log('Frontend - Login error:', error); // Debug error
+                if (error.response) {
+                    console.log('Frontend - Error response data:', error.response.data); // Debug error response
                     if (error.response.data.message) {
                         setResponseError(error.response.data.message)
                     }else{
@@ -45,15 +48,18 @@ const Login = () => {
                     </div>
 
                     <h1 className="text-2xl font-bold mb-6 text-center text-slate-800">Iniciar sesión</h1>
-                    {/* <select
-                        {...getFieldProps("role", { required: true }, undefined, 'user')}
-                        className="w-full p-2 mb-1 mt3 border border-gray-300 rounded"
+                    
+                    <select
+                        {...getFieldProps("tipo", { required: true }, undefined, 'usuario')}
+                        className="w-full p-2 mb-1 mt-3 border border-gray-300 rounded"
                     >
-                        <option value="user">
+                        <option value="usuario">
                             Usuario (Estudiante o Docente)
                         </option>
-                        <option value="admin">Administrador</option>
-                    </select> */}
+                        <option value="administrador">Administrador</option>
+                        <option value="superadmin">Super Administrador</option>
+                    </select>
+                    <p className="text-red-500">{getFieldError("tipo")}</p>
                     <input
                         type="email"
                         placeholder="Correo electronico"
@@ -64,16 +70,17 @@ const Login = () => {
                     <input
                         type="password"
                         placeholder="Contraseña"
-                        {...getFieldProps("password", { required: true })}
-                        className={`w-full p-2 mb-1 mt-3 border ${errors['password'] ? 'border-red-500' : 'border-gray-300'}  rounded`}
+                        {...getFieldProps("contraseña", { required: true })}
+                        className={`w-full p-2 mb-1 mt-3 border ${errors['contraseña'] ? 'border-red-500' : 'border-gray-300'}  rounded`}
                     />
-                    <p className="text-red-500">{getFieldError("password")}</p>
+                    <p className="text-red-500">{getFieldError("contraseña")}</p>
 
                     {
                         loading_auth ?
                             <p className="text-center">Loading...</p>
                             :
                             <button
+                                type="submit"
                                 className="w-full p-2 mb-1 mt-5 text-white bg-blue-500 rounded"
                             >
                                 Iniciar sesión
@@ -84,9 +91,6 @@ const Login = () => {
                     <p className="text-center text-red-500">{responseError}</p>
                 </div>
 
-                <div>
-                    <p className="text-center mt-6 mb-4">¿No tienes cuenta? <a href={ROUTES.auth.register} className="text-blue-500">Regístrate</a></p>
-                </div>
             </div>
         </div>
     );

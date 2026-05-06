@@ -14,7 +14,6 @@ const Portada = () => {
                 </div>
                 <div>
                     <Link to={ROUTES.auth.login} className="px-4 py-2 bg-green-500 text-white rounded-lg mr-4">Iniciar sesión</Link>
-                    <Link to={ROUTES.auth.register} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Registrarse</Link>
                 </div>
             </header>
             <main className="flex flex-1 flex-col justify-center items-center text-center px-4">
