@@ -1,41 +1,68 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import userRoute from "./infrastructure/route/user.route";
-import reservationRoute from "./infrastructure/route/reservation.route";
-import spaceRoute from "./infrastructure/route/space.route";
-
-import dbInit from "./infrastructure/db/mongo";
+import routes from "./infrastructure/routes";
+import { DatabaseConnection } from "./infrastructure/database/connection";
 
 console.clear();
 const app = express();
 app.use(express.json());
 
-const allowedOrigins = ['http://localhost:5173/','http://localhost:5173',"*"];
-app.use(cors({
+const allowedOrigins = ["http://localhost:5174/", "http://localhost:5174", "*"];
+app.use(
+  cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
     },
     optionsSuccessStatus: 200,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Authorization', 'Content-Type']
-}));
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Authorization", "Content-Type"],
+  }),
+);
 
 const port = process.env.PORT || 3001;
 
-app.use(userRoute);
-app.use(reservationRoute);
-app.use(spaceRoute);
+// Usar las rutas principales
+app.use("/api", routes);
 
-dbInit().then();
-
+// Ruta raíz
 app.get("/", (req, res) => {
-    res.send("Api funcionando");
+  res.json({
+    message: "API de Gestión de Espacios funcionando",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth (login/perfil)",
+      usuarios: "/api/usuarios (solo lectura)",
+      espacios: "/api/espacios (solo lectura)",
+      reservas: "/api/reservas (solo lectura)",
+      superadmin: "/api/superadmin (gestión usuarios/espacios)",
+      administrador: "/api/administrador (evaluar reservas)",
+      health: "/api/health",
+    },
+  });
 });
 
-app.listen(port, () => console.log(`Servidor, listo por el puerto ${port}`));
+// Iniciar conexión a la base de datos y luego el servidor
+async function startServer() {
+  try {
+    const dbConnection = DatabaseConnection.getInstance();
+    await dbConnection.connect();
+
+    app.listen(port, () => {
+      console.log(`🚀 Servidor funcionando en puerto ${port}`);
+      console.log(
+        `📚 Documentación de la API: http://localhost:${port}/api/health`,
+      );
+    });
+  } catch (error) {
+    console.error("❌ Error al iniciar el servidor:", error);
+    process.exit(1);
+  }
+}
+
+startServer();
