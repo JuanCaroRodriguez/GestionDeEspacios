@@ -1,0 +1,146 @@
+[
+  {
+    "id": "C101",
+    "nombre": "Aula C101",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C primer piso",
+    "disponible": true
+  },
+  {
+    "id": "C102",
+    "nombre": "Aula C102",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C primer piso",
+    "disponible": true
+  },
+  {
+    "id": "C103",
+    "nombre": "Aula C103",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C primer piso",
+    "disponible": true
+  },
+  {
+    "id": "C104",
+    "nombre": "Aula C104",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C primer piso",
+    "disponible": true
+  },
+  {
+    "id": "C105",
+    "nombre": "Aula C105",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C primer piso",
+    "disponible": true
+  },
+  {
+    "id": "C106",
+    "nombre": "Aula C106",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C primer piso",
+    "disponible": true
+  },
+  {
+    "id": "C201",
+    "nombre": "Aula C201",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "C202",
+    "nombre": "Aula C202",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "C203",
+    "nombre": "Aula C203",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "C204",
+    "nombre": "Aula C204",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "C205",
+    "nombre": "Aula C205",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "C206",
+    "nombre": "Aula C206",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "C301",
+    "nombre": "Aula C301",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "C302",
+    "nombre": "Aula C302",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "C303",
+    "nombre": "Aula C303",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "C304",
+    "nombre": "Aula C304",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "C305",
+    "nombre": "Aula C305",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "C306",
+    "nombre": "Aula C306",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque C tercer piso",
+    "disponible": true
+  }
+]

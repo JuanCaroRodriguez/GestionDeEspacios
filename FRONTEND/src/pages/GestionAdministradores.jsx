@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import administradoresService from '@api/services/administradores.service';
-import usuariosService from '@api/services/usuarios.service';
 
 const GestionAdministradores = () => {
     const [administradores, setAdministradores] = useState([]);
@@ -168,7 +167,7 @@ const GestionAdministradores = () => {
             const nuevoEstado = administrador.estado === 'activo' ? 'inactivo' : 'activo';
             
             // Llamar al endpoint de SuperAdmin para cambiar estado
-            await usuariosService.toggleEstado(id); // Reutilizar el mismo endpoint
+            await administradoresService.toggleEstado(id); // Reutilizar el mismo endpoint
             console.log('Estado actualizado para el administrador:', id);
             
             // Actualizar estado local
@@ -184,7 +183,7 @@ const GestionAdministradores = () => {
     const handleDeleteAdministrador = async (id) => {
         if (confirm('¿Está seguro de que desea eliminar este administrador? Esta acción no se puede deshacer.')) {
             try {
-                await usuariosService.delete(id); // Reutilizar el mismo endpoint
+                await administradoresService.delete(id); // Reutilizar el mismo endpoint
                 // Actualizar estado local
                 setAdministradores(administradores.filter(admin => admin.id !== id));
                 console.log('Administrador eliminado:', id);

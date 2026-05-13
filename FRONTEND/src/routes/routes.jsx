@@ -11,6 +11,7 @@ const componentMap = {
   "Portada": () => import("../pages/Portada"),
   "Dashboard": () => import("../pages/Dashboard"),
   "GestionEspacios": () => import("../pages/GestionEspacios"),
+  "ConsultaEspacios": () => import("../pages/ConsultaEspacios"),
   "GestionUsuarios": () => import("../pages/GestionUsuarios"),
   "GestionAdministradores": () => import("../pages/GestionAdministradores"),
   "Inicio": () => import("../pages/Inicio"),
@@ -48,6 +49,10 @@ const router = [
       {
         path: "/dashboard/espacios",
         element: <LoadComponent component="GestionEspacios" componentsMap={componentMap} loading={<></>} />,
+      },
+      {
+        path: "/dashboard/consulta-espacios",
+        element: <LoadComponent component="ConsultaEspacios" componentsMap={componentMap} loading={<></>} />,
       },
       {
         path: "/dashboard/usuarios",

@@ -65,7 +65,7 @@ export const administradoresService = {
   // Eliminar administrador (solo SuperAdmin)
   delete: async (id) => {
     try {
-      const response = await axiosInstance.delete(`/superadmin/usuarios/${id}`);
+      const response = await axiosInstance.delete(`/administrador/${id}`);
       return response.data;
     } catch (error) {
       console.error("Error al eliminar administrador:", error);

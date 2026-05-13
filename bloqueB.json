@@ -1,0 +1,146 @@
+[
+  {
+    "id": "B101",
+    "nombre": "Aula B101",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B primer piso",
+    "disponible": true
+  },
+  {
+    "id": "B102",
+    "nombre": "Aula B102",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B primer piso",
+    "disponible": true
+  },
+  {
+    "id": "B103",
+    "nombre": "Aula B103",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B primer piso",
+    "disponible": true
+  },
+  {
+    "id": "B104",
+    "nombre": "Aula B104",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B primer piso",
+    "disponible": true
+  },
+  {
+    "id": "B105",
+    "nombre": "Aula B105",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B primer piso",
+    "disponible": true
+  },
+  {
+    "id": "B106",
+    "nombre": "Aula B106",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B primer piso",
+    "disponible": true
+  },
+  {
+    "id": "B201",
+    "nombre": "Aula B201",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "B202",
+    "nombre": "Aula B202",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "B203",
+    "nombre": "Aula B203",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "B204",
+    "nombre": "Aula B204",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "B205",
+    "nombre": "Aula B205",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "B206",
+    "nombre": "Aula B206",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B segundo piso",
+    "disponible": true
+  },
+  {
+    "id": "B301",
+    "nombre": "Aula B301",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "B302",
+    "nombre": "Aula B302",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "B303",
+    "nombre": "Aula B303",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "B304",
+    "nombre": "Aula B304",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "B305",
+    "nombre": "Aula B305",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B tercer piso",
+    "disponible": true
+  },
+  {
+    "id": "B306",
+    "nombre": "Aula B306",
+    "tipo": "Aula",
+    "capacidad": 40,
+    "ubicacion": "Bloque B tercer piso",
+    "disponible": true
+  }
+]

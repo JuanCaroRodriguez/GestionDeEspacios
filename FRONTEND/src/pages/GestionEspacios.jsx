@@ -7,7 +7,15 @@ const GestionEspacios = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [formData, setFormData] = useState({
+        id: '',
+        nombre: '',
+        tipo: '',
+        capacidad: '',
+        ubicacion: ''
+    });
+    const [editFormData, setEditFormData] = useState({
         id: '',
         nombre: '',
         tipo: '',
@@ -105,6 +113,62 @@ const GestionEspacios = () => {
                 alert('Error al eliminar el espacio');
             }
         }
+    };
+
+    const handleEditEspacio = (espacio) => {
+        setEditFormData({
+            id: espacio.id,
+            nombre: espacio.nombre,
+            tipo: espacio.tipo,
+            capacidad: espacio.capacidad.toString(),
+            ubicacion: espacio.ubicacion
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdateEspacio = async () => {
+        // Validaciones
+        if (!editFormData.nombre || !editFormData.tipo || !editFormData.capacidad || !editFormData.ubicacion) {
+            alert('Por favor complete todos los campos');
+            return;
+        }
+
+        try {
+            // Actualizar espacio en la API
+            const espacioActualizado = {
+                ...editFormData,
+                capacidad: parseInt(editFormData.capacidad)
+            };
+
+            const response = await espaciosService.update(editFormData.id, espacioActualizado);
+            console.log('Espacio actualizado:', response);
+            
+            // Actualizar estado local
+            setEspacios(espacios.map(espacio => 
+                espacio.id === editFormData.id ? response : espacio
+            ));
+            setShowEditModal(false);
+            setEditFormData({
+                id: '',
+                nombre: '',
+                tipo: '',
+                capacidad: '',
+                ubicacion: ''
+            });
+            
+            alert('Espacio actualizado exitosamente');
+        } catch (error) {
+            console.error('Error al actualizar espacio:', error);
+            alert('Error al actualizar el espacio. Por favor, intente nuevamente.');
+        }
+    };
+
+    const handleEditInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData({
+            ...editFormData,
+            [name]: value
+        });
     };
 
     const handleInputChange = (e) => {
@@ -234,6 +298,12 @@ const GestionEspacios = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <div className="flex space-x-2">
                                                 <button
+                                                    onClick={() => handleEditEspacio(espacio)}
+                                                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
                                                     onClick={() => handleDeleteEspacio(espacio.id)}
                                                     className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                                                 >
@@ -349,6 +419,110 @@ const GestionEspacios = () => {
                                 className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 Crear Espacio
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Editar Espacio */}
+            {showEditModal && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Editar Espacio</h2>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    ID del Espacio
+                                </label>
+                                <input
+                                    type="text"
+                                    name="id"
+                                    value={editFormData.id}
+                                    disabled
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
+                                    readOnly
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre del Espacio
+                                </label>
+                                <input
+                                    type="text"
+                                    name="nombre"
+                                    value={editFormData.nombre}
+                                    onChange={handleEditInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Ej: Laboratorio de Sistemas"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Tipo de Espacio
+                                </label>
+                                <select
+                                    name="tipo"
+                                    value={editFormData.tipo}
+                                    onChange={handleEditInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="Laboratorio">Laboratorio</option>
+                                    <option value="Aula">Aula</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Capacidad de personas
+                                </label>
+                                <input
+                                    type="number"
+                                    name="capacidad"
+                                    value={editFormData.capacidad}
+                                    onChange={handleEditInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Ej: 30"
+                                    min="1"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Ubicación
+                                </label>
+                                <input
+                                    type="text"
+                                    name="ubicacion"
+                                    value={editFormData.ubicacion}
+                                    onChange={handleEditInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Ej: Edificio A - Piso 2"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => setShowEditModal(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleUpdateEspacio}
+                                className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                Actualizar Espacio
                             </button>
                         </div>
                     </div>

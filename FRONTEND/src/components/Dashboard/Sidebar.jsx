@@ -13,6 +13,12 @@ const Sidebar = ({ user }) => {
                 description: 'Administrar espacios y laboratorios'
             },
             {
+                title: 'Consulta de espacios',
+                icon: '🔍',
+                path: '/dashboard/consulta-espacios',
+                description: 'Consultar horarios y disponibilidad'
+            },
+            {
                 title: 'Gestión de usuarios',
                 icon: '👥',
                 path: '/dashboard/usuarios',
@@ -27,13 +33,45 @@ const Sidebar = ({ user }) => {
         ],
         administrador: [
             {
+                title: 'Consulta de espacios',
+                icon: '🔍',
+                path: '/dashboard/consulta-espacios',
+                description: 'Consultar horarios y disponibilidad'
+            },
+            {
                 title: 'Evaluar reservas',
                 icon: '📋',
                 path: '/dashboard/evaluar-reservas',
                 description: 'Evaluar solicitudes de laboratorios'
             }
         ],
-        usuario: [
+        estudiante: [
+            {
+                title: 'Consulta de espacios',
+                icon: '🔍',
+                path: '/dashboard/consulta-espacios',
+                description: 'Consultar horarios y disponibilidad'
+            },
+            {
+                title: 'Mis reservas',
+                icon: '📅',
+                path: '/dashboard/mis-reservas',
+                description: 'Ver y gestionar mis reservas'
+            },
+            {
+                title: 'Nueva reserva',
+                icon: '➕',
+                path: '/dashboard/nueva-reserva',
+                description: 'Crear una nueva reserva'
+            }
+        ],
+        docente: [
+            {
+                title: 'Consulta de espacios',
+                icon: '🔍',
+                path: '/dashboard/consulta-espacios',
+                description: 'Consultar horarios y disponibilidad'
+            },
             {
                 title: 'Mis reservas',
                 icon: '📅',

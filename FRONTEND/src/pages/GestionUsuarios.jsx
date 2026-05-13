@@ -489,10 +489,9 @@ const GestionUsuarios = () => {
                             
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Contraseña {!editMode && '(Requerido)'} {editMode && '(Opcional - dejar en blanco para mantener actual)'}
+                                    Contraseña {!editMode && '(Requerido)'}
                                     {editMode && formData.contraseña && (
                                         <span className="text-xs text-green-600 ml-2">
-                                            ⚠️ La contraseña se guardará de forma segura
                                         </span>
                                     )}
                                 </label>
