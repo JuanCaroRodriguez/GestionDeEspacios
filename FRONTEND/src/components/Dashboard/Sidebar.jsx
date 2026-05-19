@@ -7,16 +7,16 @@ const Sidebar = ({ user }) => {
     const menuItems = {
         superadmin: [
             {
-                title: 'Gestión de espacios',
-                icon: '🏢',
-                path: '/dashboard/espacios',
-                description: 'Administrar espacios y laboratorios'
-            },
-            {
                 title: 'Consulta de espacios',
                 icon: '🔍',
                 path: '/dashboard/consulta-espacios',
                 description: 'Consultar horarios y disponibilidad'
+            },
+            {
+                title: 'Gestión de espacios',
+                icon: '🏢',
+                path: '/dashboard/espacios',
+                description: 'Administrar espacios y laboratorios'
             },
             {
                 title: 'Gestión de usuarios',
@@ -57,12 +57,6 @@ const Sidebar = ({ user }) => {
                 icon: '📅',
                 path: '/dashboard/mis-reservas',
                 description: 'Ver y gestionar mis reservas'
-            },
-            {
-                title: 'Nueva reserva',
-                icon: '➕',
-                path: '/dashboard/nueva-reserva',
-                description: 'Crear una nueva reserva'
             }
         ],
         docente: [
@@ -77,18 +71,6 @@ const Sidebar = ({ user }) => {
                 icon: '📅',
                 path: '/dashboard/mis-reservas',
                 description: 'Ver y gestionar mis reservas'
-            },
-            {
-                title: 'Espacios disponibles',
-                icon: '🏫',
-                path: '/dashboard/espacios-disponibles',
-                description: 'Consultar espacios disponibles'
-            },
-            {
-                title: 'Nueva reserva',
-                icon: '➕',
-                path: '/dashboard/nueva-reserva',
-                description: 'Crear una nueva reserva'
             }
         ]
     };

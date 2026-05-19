@@ -88,10 +88,6 @@ const Dashboard = () => {
                                 <p className="text-gray-600">Gestiona tus reservas activas</p>
                             </div>
                             <div className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">🏫 Espacios disponibles</h2>
-                                <p className="text-gray-600">Consulta espacios y horarios</p>
-                            </div>
-                            <div className="bg-white p-6 rounded-lg shadow">
                                 <h2 className="text-xl font-semibold mb-4">➕ Nueva reserva</h2>
                                 <p className="text-gray-600">Crea una nueva reserva</p>
                             </div>

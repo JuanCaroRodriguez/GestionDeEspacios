@@ -22,6 +22,9 @@ const GestionEspacios = () => {
         capacidad: '',
         ubicacion: ''
     });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+    const [filterUbicacion, setFilterUbicacion] = useState('');
 
     // Cargar datos desde la API
     useEffect(() => {
@@ -179,6 +182,26 @@ const GestionEspacios = () => {
         });
     };
 
+    // Filtrar espacios por ubicación
+    const filteredEspacios = espacios.filter(espacio =>
+        espacio.ubicacion.toLowerCase().includes(filterUbicacion.toLowerCase())
+    );
+
+    // Calcular paginación
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentEspacios = filteredEspacios.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredEspacios.length / itemsPerPage);
+
+    // Cambiar página
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Resetear a página 1 cuando cambia el filtro
+    const handleFilterChange = (e) => {
+        setFilterUbicacion(e.target.value);
+        setCurrentPage(1);
+    };
+
     return (
         <DashboardLayout title="Gestión de Espacios">
             <div className="p-6">
@@ -218,6 +241,38 @@ const GestionEspacios = () => {
                         </div>
                     </div>
                 )}
+
+            {/* Filtro de búsqueda */}
+            <div className="bg-white rounded-lg shadow p-4 mb-6">
+                <div className="flex items-center space-x-4">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Filtrar por ubicación
+                        </label>
+                        <input
+                            type="text"
+                            value={filterUbicacion}
+                            onChange={handleFilterChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Ej: Bloque A, Edificio B..."
+                        />
+                    </div>
+                    <div className="flex items-end">
+                        <button
+                            onClick={() => {
+                                setFilterUbicacion('');
+                                setCurrentPage(1);
+                            }}
+                            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                        >
+                            Limpiar filtro
+                        </button>
+                    </div>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                    Mostrando {filteredEspacios.length} de {espacios.length} espacios
+                </div>
+            </div>
 
             {/* Estadísticas */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -276,7 +331,7 @@ const GestionEspacios = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                espacios.map((espacio) => (
+                                currentEspacios.map((espacio) => (
                                     <tr key={espacio.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {espacio.id}
@@ -317,6 +372,52 @@ const GestionEspacios = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Paginación */}
+                {totalPages > 1 && (
+                    <div className="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                        <div className="text-sm text-gray-700">
+                            Página {currentPage} de {totalPages}
+                        </div>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className={`px-3 py-1 rounded ${
+                                    currentPage === 1
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                Anterior
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <button
+                                    key={page}
+                                    onClick={() => paginate(page)}
+                                    className={`px-3 py-1 rounded ${
+                                        currentPage === page
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className={`px-3 py-1 rounded ${
+                                    currentPage === totalPages
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal Crear Espacio */}
