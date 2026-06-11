@@ -21,13 +21,53 @@ export class AdministradorController {
   // GET - Obtener administrador por ID
   async getById(req: Request, res: Response) {
     try {
-      const administrador = await this.administradorRepository.findById(req.params.id);
+      const administrador = await this.administradorRepository.findById(
+        req.params.id,
+      );
       if (!administrador) {
         return res.status(404).json({ error: "Administrador no encontrado" });
       }
       res.json(administrador);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener administrador" });
+    }
+  }
+
+  // GET - Obtener administradores por empresa
+  async getByEmpresa(req: Request, res: Response) {
+    try {
+      const { idEmpresa } = req.params;
+      const administradores =
+        await this.administradorRepository.findByEmpresa(idEmpresa);
+      res.json(administradores);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Error al obtener administradores por empresa" });
+    }
+  }
+
+  // PUT - Actualizar estado de administrador
+  async updateEstado(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+
+      if (!estado || !["activo", "inactivo", "suspendido"].includes(estado)) {
+        return res.status(400).json({ error: "Estado no válido" });
+      }
+
+      const updatedAdministrador =
+        await this.administradorRepository.updateEstado(id, estado);
+      if (!updatedAdministrador) {
+        return res.status(404).json({ error: "Administrador no encontrado" });
+      }
+
+      res.json(updatedAdministrador);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Error al actualizar estado del administrador" });
     }
   }
 
@@ -41,7 +81,8 @@ export class AdministradorController {
       }
 
       // Verificar si ya existe
-      const existsByEmail = await this.administradorRepository.existsByEmail(email);
+      const existsByEmail =
+        await this.administradorRepository.existsByEmail(email);
       if (existsByEmail) {
         return res.status(400).json({ error: "El email ya está registrado" });
       }
@@ -57,9 +98,15 @@ export class AdministradorController {
 
       // Crear administrador con contraseña hasheada
       const { Administrador } = await import("../../domain/Administrador");
-      const administrador = new Administrador(id, nombre, email, contraseñaHasheada);
+      const administrador = new Administrador(
+        id,
+        nombre,
+        email,
+        contraseñaHasheada,
+      );
 
-      const createdAdministrador = await this.administradorRepository.create(administrador);
+      const createdAdministrador =
+        await this.administradorRepository.create(administrador);
       res.status(201).json(createdAdministrador);
     } catch (error) {
       res.status(500).json({ error: "Error al crear administrador" });
@@ -71,18 +118,20 @@ export class AdministradorController {
     try {
       const { nombre, email, contraseña } = req.body;
 
-      const administrador = await this.administradorRepository.findById(req.params.id);
+      const administrador = await this.administradorRepository.findById(
+        req.params.id,
+      );
       if (!administrador) {
         return res.status(404).json({ error: "Administrador no encontrado" });
       }
 
       // Preparar datos de actualización
       const updateData: any = {};
-      
+
       // Agregar campos si se proporcionan
       if (nombre) updateData.nombre = nombre;
       if (email) updateData.email = email;
-      
+
       // Hashear contraseña si se proporciona
       if (contraseña) {
         const bcrypt = await import("bcryptjs");

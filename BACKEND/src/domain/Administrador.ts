@@ -1,8 +1,14 @@
 import { Persona } from "./Persona";
 
 export class Administrador extends Persona {
-  constructor(id: string, nombre: string, email: string, contraseña: string) {
-    super(id, nombre, email, contraseña);
+  constructor(
+    id: string,
+    nombre: string,
+    email: string,
+    contraseña: string,
+    estado: string = "activo",
+  ) {
+    super(id, nombre, email, contraseña, estado);
   }
 
   public cancelar(): void {

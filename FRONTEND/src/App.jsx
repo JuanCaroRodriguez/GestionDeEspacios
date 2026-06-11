@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import "./App.css";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
+import { Toaster } from "sonner";
 
 import '@fontsource-variable/lexend';
 
@@ -19,6 +20,12 @@ const App = () => {
         </div>
       </div>
 
+      <Toaster 
+        position="top-right"
+        richColors
+        closeButton
+        expand={false}
+      />
     </>
   );
 };

@@ -5,6 +5,7 @@ export interface ISuperAdmin extends Document {
   nombre: string;
   email: string;
   contraseña: string;
+  id_empresa?: string;
   permisos: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +30,11 @@ const SuperAdminSchema = new Schema<ISuperAdmin>(
     contraseña: {
       type: String,
       required: true,
+    },
+    id_empresa: {
+      type: String,
+      required: false,
+      ref: "Empresa",
     },
     permisos: {
       type: [String],

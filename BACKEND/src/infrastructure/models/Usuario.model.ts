@@ -7,6 +7,7 @@ export interface IUsuario extends Document {
   contraseña: string;
   tipo: "estudiante" | "docente";
   estado: "activo" | "inactivo" | "suspendido";
+  id_empresa: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,10 @@ const UsuarioSchema = new Schema<IUsuario>(
       type: String,
       enum: ["activo", "inactivo", "suspendido"],
       default: "activo",
+      required: true,
+    },
+    id_empresa: {
+      type: String,
       required: true,
     },
   },

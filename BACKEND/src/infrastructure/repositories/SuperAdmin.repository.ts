@@ -35,10 +35,7 @@ export class SuperAdminRepository implements ISuperAdminRepository {
     return superAdmins.map((superAdmin) => this.mapToEntity(superAdmin));
   }
 
-  async update(
-    id: string,
-    superAdminData: Partial<SuperAdmin>,
-  ): Promise<SuperAdmin | null> {
+  async update(id: string, superAdminData: any): Promise<SuperAdmin | null> {
     const updatedSuperAdmin = await SuperAdminModel.findOneAndUpdate(
       { id },
       superAdminData,
@@ -78,6 +75,7 @@ export class SuperAdminRepository implements ISuperAdminRepository {
       superAdminDoc.nombre,
       superAdminDoc.email,
       superAdminDoc.contraseña,
+      superAdminDoc.id_empresa,
     );
     return superAdmin;
   }

@@ -5,6 +5,8 @@ import reservaRoutes from "./reserva.routes";
 import superadminRoutes from "./superadmin.routes";
 import administradorRoutes from "./administrador.routes";
 import authRoutes from "./auth.routes";
+import empresaRoutes from "./empresa.routes";
+import bloqueRoutes from "./bloque.routes";
 
 const router = Router();
 
@@ -15,6 +17,8 @@ router.use("/auth", authRoutes);
 router.use("/usuarios", usuarioRoutes);
 router.use("/espacios", espacioRoutes);
 router.use("/reservas", reservaRoutes);
+router.use("/empresas", empresaRoutes);
+router.use("/bloques", bloqueRoutes);
 router.use("/superadmin", superadminRoutes);
 router.use("/administrador", administradorRoutes);
 

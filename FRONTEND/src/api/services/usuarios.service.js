@@ -53,7 +53,6 @@ export const usuariosService = {
     try {
       // Enviar contraseña como texto plano - el backend se encarga del hashing
       if (usuarioData.contraseña) {
-        console.log("Contraseña proporcionada para hashing en backend");
       }
 
       const response = await axiosInstance.put(`/usuarios/${id}`, usuarioData);
@@ -117,6 +116,19 @@ export const usuariosService = {
       return response.data;
     } catch (error) {
       console.error("Error al obtener usuarios inactivos:", error);
+      throw error;
+    }
+  },
+
+  // Obtener usuarios por empresa
+  getByEmpresa: async (idEmpresa) => {
+    try {
+      const response = await axiosInstance.get(
+        `/usuarios/empresa/${idEmpresa}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener usuarios por empresa:", error);
       throw error;
     }
   },

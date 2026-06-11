@@ -10,7 +10,7 @@ import Info from "./Info";
 const Header = () => {
     const { session } = useSession();
 
-    console.log(session);
+    
     const nameF = session?.user?.name?.split(" ")[0];
     const capitalizedFirstName =
         nameF?.charAt(0).toUpperCase() + nameF?.slice(1).toLowerCase();

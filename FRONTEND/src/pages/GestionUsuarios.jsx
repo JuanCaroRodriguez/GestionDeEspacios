@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import usuariosService from '@api/services/usuarios.service';
 import administradoresService from '@api/services/administradores.service';
+import useSession from '@context/Auth/useSession';
+import { FiUsers, FiUser, FiTool, FiPlus } from 'react-icons/fi';
 
 const GestionUsuarios = () => {
+    const { session } = useSession();
     const [usuarios, setUsuarios] = useState([]);
     const [administradores, setAdministradores] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,16 +33,21 @@ const GestionUsuarios = () => {
                 setLoading(true);
                 setError(null);
                 
-                // Cargar usuarios y administradores en paralelo
+                // Obtener id_empresa del usuario logueado (igual que en GestionEspacios)
+                const idEmpresa = session?.user?.id_empresa;
+                
+                
+                // Usar getByEmpresa() para filtrar por empresa
+                const usuariosPromise = usuariosService.getByEmpresa(idEmpresa);
+                const administradoresPromise = administradoresService.getByEmpresa(idEmpresa);
+                
                 const [usuariosData, administradoresData] = await Promise.all([
-                    usuariosService.getAll(),
-                    administradoresService.getAll()
+                    usuariosPromise,
+                    administradoresPromise
                 ]);
                 
                 setUsuarios(usuariosData);
                 setAdministradores(administradoresData);
-                console.log('Usuarios cargados:', usuariosData);
-                console.log('Administradores cargados:', administradoresData);
             } catch (err) {
                 console.error('Error al cargar usuarios:', err);
                 setError('No se pudieron cargar los usuarios. Por favor, intente nuevamente.');
@@ -72,7 +80,7 @@ const GestionUsuarios = () => {
         };
 
         fetchUsuarios();
-    }, []);
+    }, [session]);
 
     const handleCreateUsuario = async () => {
         // Validaciones
@@ -282,11 +290,11 @@ const GestionUsuarios = () => {
 
     const getTipoIcon = (tipo) => {
         switch(tipo) {
-            case 'estudiante': return '🎓';
-            case 'docente': return '👩‍🏫';
-            case 'administrador': return '👨‍💼';
-            case 'superadmin': return '🔧';
-            default: return '👤';
+            case 'estudiante': return <FiUser className="w-4 h-4" />;
+            case 'docente': return <FiUser className="w-4 h-4" />;
+            case 'administrador': return <FiUsers className="w-4 h-4" />;
+            case 'superadmin': return <FiTool className="w-4 h-4" />;
+            default: return <FiUser className="w-4 h-4" />;
         }
     };
 
@@ -294,12 +302,16 @@ const GestionUsuarios = () => {
         <DashboardLayout title="Gestión de Usuarios">
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">👥 Gestión de Usuarios</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <FiUsers className="w-6 h-6" />
+                        Gestión de Usuarios
+                    </h1>
                     <button
                         onClick={() => setShowModal(true)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
                     >
-                        ➕ Crear Usuario
+                        <FiPlus className="w-4 h-4 mr-2" />
+                        Crear Usuario
                     </button>
                 </div>
 
@@ -356,9 +368,6 @@ const GestionUsuarios = () => {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    ID
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Usuario
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -375,7 +384,7 @@ const GestionUsuarios = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="8" className="px-6 py-4 text-center">
+                                    <td colSpan="7" className="px-6 py-4 text-center">
                                         <div className="flex items-center justify-center">
                                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
                                             <span>Cargando...</span>
@@ -385,9 +394,6 @@ const GestionUsuarios = () => {
                             ) : (
                                 usuariosFiltrados.map((usuario) => (
                                     <tr key={usuario.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {usuario.id}
-                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <span className="text-lg mr-2">{getTipoIcon(usuario.tipo)}</span>

@@ -34,9 +34,9 @@ export class EspacioController {
   // POST - Crear nuevo espacio
   async create(req: Request, res: Response) {
     try {
-      const { id, nombre, tipo, capacidad, ubicacion } = req.body;
+      const { id, nombre, tipo, capacidad, bloque, salon } = req.body;
 
-      if (!id || !nombre || !tipo || !capacidad || !ubicacion) {
+      if (!id || !nombre || !tipo || !capacidad || !bloque || !salon) {
         return res.status(400).json({ error: "Faltan campos obligatorios" });
       }
 
@@ -53,7 +53,8 @@ export class EspacioController {
         nombre,
         tipo,
         capacidad,
-        ubicacion,
+        bloque,
+        salon,
       );
 
       const createdEspacio = await this.espacioRepository.create(espacio);
@@ -66,7 +67,7 @@ export class EspacioController {
   // PUT - Actualizar espacio
   async update(req: Request, res: Response) {
     try {
-      const { nombre, tipo, capacidad, ubicacion } = req.body;
+      const { nombre, tipo, capacidad, bloque, salon } = req.body;
 
       const espacio = await this.espacioRepository.findById(req.params.id);
       if (!espacio) {
@@ -75,12 +76,13 @@ export class EspacioController {
 
       // Preparar datos de actualización
       const updateData: any = {};
-      
+
       // Agregar campos si se proporcionan
       if (nombre) updateData.nombre = nombre;
       if (tipo) updateData.tipo = tipo;
       if (capacidad) updateData.capacidad = capacidad;
-      if (ubicacion) updateData.ubicacion = ubicacion;
+      if (bloque) updateData.bloque = bloque;
+      if (salon) updateData.salon = salon;
 
       const updatedEspacio = await this.espacioRepository.update(
         req.params.id,
@@ -123,7 +125,9 @@ export class EspacioController {
       );
       res.json(updatedEspacio);
     } catch (error) {
-      res.status(500).json({ error: "Error al cambiar disponibilidad del espacio" });
+      res
+        .status(500)
+        .json({ error: "Error al cambiar disponibilidad del espacio" });
     }
   }
 }

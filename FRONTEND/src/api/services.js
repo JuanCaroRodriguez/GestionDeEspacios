@@ -37,9 +37,7 @@ export const API_PROTOTYPES = Object.freeze({
     },
     login: async (user) => {
       try {
-        console.log("Services - Sending login request with data:", user); // Debug services
         const response = await axios.post(`/auth/login`, user);
-        console.log("Services - Login response:", response.data); // Debug response
         return response.data;
       } catch (error) {
         console.error("Error en el inicio de sesión:", error);

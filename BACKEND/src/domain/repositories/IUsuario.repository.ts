@@ -12,6 +12,7 @@ export interface IUsuarioRepository {
 
   // Specific operations
   findByTipo(tipo: "estudiante" | "docente"): Promise<Usuario[]>;
+  findByEmpresa(idEmpresa: string): Promise<Usuario[]>;
   existsByEmail(email: string): Promise<boolean>;
   existsById(id: string): Promise<boolean>;
 }

@@ -1,59 +1,83 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
 
 export interface IReserva extends Document {
-    id: string;
-    personaId: string;
-    espacioId: string;
-    fechaInicio: Date;
-    fechaFin: Date;
-    estado: 'activa' | 'cancelada' | 'completada' | 'pendiente';
-    motivo?: string;
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  personaId: string;
+  espacioId: string;
+  fecha: Date;
+  horaInicio: string;
+  horaFin: string;
+  tipo: "permanente" | "ocasional";
+  fechaInicio: Date;
+  fechaFin: Date;
+  estado: "activa" | "cancelada" | "completada" | "pendiente";
+  motivo?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const ReservaSchema = new Schema<IReserva>({
+const ReservaSchema = new Schema<IReserva>(
+  {
     id: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
     personaId: {
-        type: String,
-        required: true,
-        ref: 'Usuario'
+      type: String,
+      required: true,
+      ref: "Usuario",
     },
     espacioId: {
-        type: String,
-        required: true,
-        ref: 'Espacio'
+      type: String,
+      required: true,
+      ref: "Espacio",
+    },
+    fecha: {
+      type: Date,
+      required: true,
+    },
+    horaInicio: {
+      type: String,
+      required: true,
+    },
+    horaFin: {
+      type: String,
+      required: true,
+    },
+    tipo: {
+      type: String,
+      enum: ["permanente", "ocasional"],
+      required: true,
     },
     fechaInicio: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     },
     fechaFin: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     },
     estado: {
-        type: String,
-        enum: ['activa', 'cancelada', 'completada', 'pendiente'],
-        default: 'activa',
-        required: true
+      type: String,
+      enum: ["activa", "cancelada", "completada", "pendiente"],
+      default: "activa",
+      required: true,
     },
     motivo: {
-        type: String,
-        required: false
-    }
-}, {
+      type: String,
+      required: false,
+    },
+  },
+  {
     timestamps: true,
-    collection: 'reservas'
-});
+    collection: "reservas",
+  },
+);
 
 // Índices para mejor rendimiento
 ReservaSchema.index({ espacioId: 1, fechaInicio: 1, fechaFin: 1 });
 ReservaSchema.index({ personaId: 1 });
 ReservaSchema.index({ estado: 1 });
 
-export const ReservaModel = model<IReserva>('Reserva', ReservaSchema);
+export const ReservaModel = model<IReserva>("Reserva", ReservaSchema);

@@ -112,6 +112,32 @@ export const administradoresService = {
       throw error;
     }
   },
+
+  // Obtener administradores por empresa
+  getByEmpresa: async (idEmpresa) => {
+    try {
+      const response = await axiosInstance.get(
+        `/administrador/empresa/${idEmpresa}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener administradores por empresa:", error);
+      throw error;
+    }
+  },
+
+  // Actualizar estado de administrador
+  updateEstado: async (id, estado) => {
+    try {
+      const response = await axiosInstance.put(`/administrador/${id}/estado`, {
+        estado,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al actualizar estado del administrador:", error);
+      throw error;
+    }
+  },
 };
 
 export default administradoresService;

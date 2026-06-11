@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import espaciosService from '@api/services/espacios.service';
+import bloquesService from '@api/services/bloques.service';
+import useSession from '../context/Auth/useSession';
+import { toast } from 'sonner';
+import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers } from 'react-icons/fi';
 
-const ConsultaEspacios = () => {
+const ConsultaDisponibilidad = () => {
+    const { session } = useSession();
     const [espacios, setEspacios] = useState([]);
+    const [bloques, setBloques] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedType, setSelectedType] = useState('Laboratorio');
-    const [expandedLocations, setExpandedLocations] = useState({});
+    const [selectedBlock, setSelectedBlock] = useState(null); // { bloque, espacios }
     const [selectedSpace, setSelectedSpace] = useState(null);
     const [showSchedule, setShowSchedule] = useState(false);
+    const [currentWeek, setCurrentWeek] = useState(new Date());
+    const [showUnavailableModal, setShowUnavailableModal] = useState(false);
+    const [unavailableSpace, setUnavailableSpace] = useState(null);
 
     // Franjas horarias
     const timeSlots = [
@@ -33,47 +41,324 @@ const ConsultaEspacios = () => {
         '9:20 - 10:00'
     ];
 
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-    // Cargar espacios según el tipo seleccionado
+    // Obtener fechas de la semana actual (lunes a sábado)
+    const getWeekDates = (weekStart) => {
+        const d = new Date(weekStart);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para que lunes sea 1
+        const monday = new Date(d.setDate(diff));
+        const weekDates = [];
+        for (let i = 0; i < 6; i++) {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            weekDates.push(date);
+        }
+        return weekDates;
+    };
+
+    const weekDates = getWeekDates(currentWeek);
+
+    const prevWeek = () => {
+        const prev = new Date(currentWeek);
+        prev.setDate(prev.getDate() - 7);
+        setCurrentWeek(prev);
+    };
+
+    const nextWeek = () => {
+        const next = new Date(currentWeek);
+        next.setDate(next.getDate() + 7);
+        setCurrentWeek(next);
+    };
+
+    const isCurrentWeek = () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentWeekStart = new Date(currentWeek);
+        currentWeekStart.setHours(0, 0, 0, 0);
+        // Normalizar ambos al lunes de su semana
+        const todayWeekStart = getWeekDates(today)[0];
+        const selectedWeekStart = getWeekDates(currentWeekStart)[0];
+        todayWeekStart.setHours(0, 0, 0, 0);
+        selectedWeekStart.setHours(0, 0, 0, 0);
+        return todayWeekStart.getTime() === selectedWeekStart.getTime();
+    };
+
+    const formatWeekRange = () => {
+        const start = weekDates[0];
+        const end = weekDates[5];
+        return `${start.getDate()} ${start.toLocaleString('default', { month: 'short' })} - ${end.getDate()} ${end.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
+    };
+
+    // Función helper para obtener el nombre del bloque por ID
+    const getNombreBloque = (bloqueId) => {
+        const bloque = bloques.find(b => b.id === bloqueId);
+        return bloque ? bloque.nombre : bloqueId;
+    };
+
+    // Cargar todos los espacios y bloques
     useEffect(() => {
-        const fetchEspacios = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const data = await espaciosService.getByTipo(selectedType);
-                setEspacios(data);
-                console.log(`Espacios de tipo ${selectedType} cargados:`, data);
+                
+                // Obtener id_empresa del usuario logueado
+                const idEmpresa = session?.user?.id_empresa;
+                if (!idEmpresa) {
+                    setError('No se encontró la empresa del usuario');
+                    return;
+                }
+                
+                // Cargar espacios y bloques en paralelo
+                const [espaciosData, bloquesData] = await Promise.all([
+                    espaciosService.getByEmpresa(idEmpresa),
+                    bloquesService.getByIdEmpresa(idEmpresa)
+                ]);
+                
+                setEspacios(espaciosData);
+                setBloques(bloquesData);
+                console.log('Espacios cargados:', espaciosData);
+                console.log('Bloques cargados:', bloquesData);
             } catch (err) {
-                console.error('Error al cargar espacios:', err);
-                setError('No se pudieron cargar los espacios. Por favor, intente nuevamente.');
+                console.error('Error al cargar datos:', err);
+                setError('No se pudieron cargar los datos. Por favor, intente nuevamente.');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchEspacios();
-    }, [selectedType]);
+        fetchData();
+    }, [session]);
 
-    // Agrupar espacios por ubicación
+    // Agrupar espacios por bloque
     const groupedEspacios = espacios.reduce((acc, espacio) => {
-        if (!acc[espacio.ubicacion]) {
-            acc[espacio.ubicacion] = [];
+        const nombreBloque = getNombreBloque(espacio.bloque);
+        if (!acc[nombreBloque]) {
+            acc[nombreBloque] = [];
         }
-        acc[espacio.ubicacion].push(espacio);
+        acc[nombreBloque].push(espacio);
         return acc;
     }, {});
 
-    // Toggle expansión de ubicación
-    const toggleLocation = (location) => {
-        setExpandedLocations(prev => ({
-            ...prev,
-            [location]: !prev[location]
-        }));
+    // Renderizar plano 2D general de todos los bloques
+    const renderMain2D = () => {
+        if (selectedBlock) {
+            // Vista de salones de un bloque
+            return (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <FiMapPin className="w-5 h-5" />
+                            Espacios de {selectedBlock.bloque}
+                        </h2>
+                        <button
+                            onClick={() => setSelectedBlock(null)}
+                            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm"
+                        >
+                            <FiArrowLeft className="w-4 h-4 mr-2" />
+                            Volver a plano general
+                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                            {selectedBlock.espacios.map(espacio => (
+                                <div
+                                    key={espacio.id}
+                                    onClick={() => selectSpace(espacio)}
+                                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:scale-105 ${
+                                        espacio.disponible
+                                            ? 'border-green-400 bg-green-50 hover:bg-green-100'
+                                            : 'border-red-400 bg-red-50 hover:bg-red-100'
+                                    }`}
+                                >
+                                    <div className="flex flex-col justify-between h-full">
+                                        <div>
+                                            <div className="font-semibold text-sm text-gray-800">
+                                                {espacio.nombre}
+                                            </div>
+                                            <div className="text-xs text-gray-600 mt-1">
+                                                <FiTag className="w-3 h-3 mr-1" />
+                                                {espacio.tipo}
+                                            </div>
+                                            <div className="text-xs text-gray-600">
+                                                <FiMapPin className="w-3 h-3 mr-1" />
+                                                Salón {espacio.salon}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                <FiUsers className="w-3 h-3 mr-1" />
+                                                Capacidad: {espacio.capacidad}
+                                            </div>
+                                        </div>
+                                        <div className="text-center mt-3">
+                                            <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                                                espacio.disponible
+                                                    ? 'bg-green-200 text-green-800'
+                                                    : 'bg-red-200 text-red-800'
+                                            }`}>
+                                                {espacio.disponible ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Vista general de bloques con formas arquitectónicas
+        const blocks = Object.keys(groupedEspacios).sort(); // Ordenar alfabéticamente
+        
+        // Layout dinámico adaptable
+        const svgWidth = 350;
+        const svgHeight = 320;
+        const margin = 20;
+        const streetWidth = 15;
+        const minCellWidth = 80;
+        const minCellHeight = 60;
+        
+        // Calcular columnas y filas óptimas
+        const totalBlocks = blocks.length;
+        let gridCols = Math.ceil(Math.sqrt(totalBlocks));
+        let gridRows = Math.ceil(totalBlocks / gridCols);
+        
+        // Ajustar para mejor distribución
+        while (gridCols > 1 && (gridCols - 1) * gridRows >= totalBlocks) {
+            gridCols--;
+            gridRows = Math.ceil(totalBlocks / gridCols);
+        }
+        
+        // Calcular tamaño de celdas y espaciado
+        const availableWidth = svgWidth - 2 * margin;
+        const availableHeight = svgHeight - 2 * margin;
+        const totalStreetWidthH = (gridRows - 1) * streetWidth;
+        const totalStreetWidthV = (gridCols - 1) * streetWidth;
+        
+        const cellWidth = Math.max(minCellWidth, Math.floor((availableWidth - totalStreetWidthV) / gridCols));
+        const cellHeight = Math.max(minCellHeight, Math.floor((availableHeight - totalStreetWidthH) / gridRows));
+        
+        // Generar posiciones automáticamente
+        const blockLayouts = {};
+        blocks.forEach((bloque, index) => {
+            const row = Math.floor(index / gridCols);
+            const col = index % gridCols;
+            blockLayouts[bloque] = {
+                x: margin + col * (cellWidth + streetWidth),
+                y: margin + row * (cellHeight + streetWidth),
+                width: cellWidth,
+                height: cellHeight,
+                shape: 'rect'
+            };
+        });
+
+        return (
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <FiMap className="w-5 h-5" />
+                    Plano General de Bloques
+                </h2>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="relative bg-gray-50 rounded-lg" style={{ width: '100%', height: '400px' }}>
+                        <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="border border-gray-300 rounded">
+                            {/* Calles dinámicas entre cuadrículas */}
+                            {Array.from({ length: gridRows - 1 }).map((_, rowIndex) => (
+                                <rect
+                                    key={`street-h-${rowIndex}`}
+                                    x={0}
+                                    y={margin + (rowIndex + 1) * cellHeight + rowIndex * streetWidth}
+                                    width={svgWidth}
+                                    height={streetWidth}
+                                    fill="#d1d5db"
+                                />
+                            ))}
+                            {Array.from({ length: gridCols - 1 }).map((_, colIndex) => (
+                                <rect
+                                    key={`street-v-${colIndex}`}
+                                    x={margin + (colIndex + 1) * cellWidth + colIndex * streetWidth}
+                                    y={0}
+                                    width={streetWidth}
+                                    height={svgHeight}
+                                    fill="#d1d5db"
+                                />
+                            ))}
+                            
+                            {/* Renderizar bloques en cuadrícula */}
+                            {blocks.map(bloque => {
+                                const layout = blockLayouts[bloque];
+                                const espacios = groupedEspacios[bloque];
+                                const activos = espacios.filter(e => e.disponible).length;
+                                
+                                return (
+                                    <g key={bloque}>
+                                        <rect
+                                            x={layout.x}
+                                            y={layout.y}
+                                            width={layout.width}
+                                            height={layout.height}
+                                            fill="#dbeafe"
+                                            stroke="#3b82f6"
+                                            strokeWidth="2"
+                                            className="cursor-pointer hover:fill-blue-200 transition-colors"
+                                            onClick={() => setSelectedBlock({ bloque, espacios })}
+                                            rx="4"
+                                        />
+                                        <text
+                                            x={layout.x + layout.width/2}
+                                            y={layout.y + layout.height/2 - 8}
+                                            textAnchor="middle"
+                                            className="text-sm font-bold fill-gray-800 pointer-events-none"
+                                        >
+                                            {bloque}
+                                        </text>
+                                        <text
+                                            x={layout.x + layout.width/2}
+                                            y={layout.y + layout.height/2 + 8}
+                                            textAnchor="middle"
+                                            className="text-xs fill-gray-600 pointer-events-none"
+                                        >
+                                            {espacios.length} salones
+                                        </text>
+                                        <text
+                                            x={layout.x + layout.width/2}
+                                            y={layout.y + layout.height/2 + 20}
+                                            textAnchor="middle"
+                                            className="text-xs fill-green-600 pointer-events-none"
+                                        >
+                                            {activos} activos
+                                        </text>
+                                    </g>
+                                );
+                            })}
+                            
+                                                    </svg>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-4 text-sm">
+                        <div className="flex items-center">
+                            <div className="w-6 h-6 bg-blue-100 border-2 border-blue-400 rounded mr-2"></div>
+                            <span className="text-gray-700">Bloque (clic para ver salones)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     };
+
 
     // Seleccionar espacio para ver horario
     const selectSpace = (space) => {
+        // Verificar si el espacio está disponible
+        if (!space.disponible) {
+            setUnavailableSpace(space);
+            setShowUnavailableModal(true);
+            return;
+        }
+        
         setSelectedSpace(space);
         setShowSchedule(true);
     };
@@ -84,6 +369,7 @@ const ConsultaEspacios = () => {
         setSelectedSpace(null);
     };
 
+
     if (showSchedule && selectedSpace) {
         return (
             <DashboardLayout title="Horario del Espacio">
@@ -93,14 +379,44 @@ const ConsultaEspacios = () => {
                             onClick={backToSpaces}
                             className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                         >
-                            ← Volver a espacios
+                            <FiArrowLeft className="w-4 h-4 mr-2" />
+                            Volver a espacios
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            📅 Horario - {selectedSpace.nombre}
+                        <h1 className="text-2xl font-bold text-gray-900 flex items-center justify-center">
+                            <FiCalendar className="w-5 h-5 mr-2" /> Horario - {selectedSpace.nombre}
                         </h1>
                         <p className="text-gray-600 mt-2">
-                            📍 {selectedSpace.ubicacion} | 👥 Capacidad: {selectedSpace.capacidad} personas
+                            {getNombreBloque(selectedSpace.bloque)} - Salón {selectedSpace.salon} | Capacidad: {selectedSpace.capacidad} personas
                         </p>
+                    </div>
+
+                    {/* Navegación de semanas */}
+                    <div className="bg-white rounded-lg shadow p-4 mb-4">
+                        <div className="flex items-center justify-between">
+                            <button
+                                onClick={prevWeek}
+                                disabled={isCurrentWeek()}
+                                className={`px-4 py-2 rounded transition-colors text-sm flex items-center justify-center ${
+                                    isCurrentWeek()
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-gray-500 text-white hover:bg-gray-600'
+                                }`}
+                            >
+                                <FiArrowLeft className="w-4 h-4 mr-2" />
+                            Semana anterior
+                            </button>
+                            <div className="text-sm font-medium text-gray-700 flex items-center justify-center">
+                                <FiCalendar className="w-4 h-4 mr-2" />
+                            Semana: {formatWeekRange()}
+                            </div>
+                            <button
+                                onClick={nextWeek}
+                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm flex items-center justify-center"
+                            >
+                                Siguiente semana
+                                <FiArrowLeft className="w-4 h-4 ml-2 rotate-180" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Grid de horario */}
@@ -111,9 +427,12 @@ const ConsultaEspacios = () => {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border">
                                         Franja Horaria
                                     </th>
-                                    {days.map(day => (
+                                    {days.map((day, index) => (
                                         <th key={day} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border">
-                                            {day}
+                                            <div>{day}</div>
+                                            <div className="text-xs text-gray-400">
+                                                {weekDates[index].getDate()} {weekDates[index].toLocaleString('default', { month: 'short' })}
+                                            </div>
                                         </th>
                                     ))}
                                 </tr>
@@ -156,34 +475,12 @@ const ConsultaEspacios = () => {
     }
 
     return (
-        <DashboardLayout title="Consulta de Espacios">
+        <DashboardLayout title="Consulta de Disponibilidad">
             <div className="p-6">
-                {/* Selector de tipo de espacio */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">🏢 Consulta de Espacios</h1>
-                    <div className="flex space-x-4">
-                        <button
-                            onClick={() => setSelectedType('Laboratorio')}
-                            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                selectedType === 'Laboratorio'
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                        >
-                            🔬 Laboratorios
-                        </button>
-                        <button
-                            onClick={() => setSelectedType('Aula')}
-                            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                selectedType === 'Aula'
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                        >
-                            📚 Aulas
-                        </button>
-                    </div>
-                </div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <FiCalendar className="w-6 h-6" />
+                    Consulta de Disponibilidad
+                </h1>
 
                 {/* Mensaje de error */}
                 {error && (
@@ -212,84 +509,47 @@ const ConsultaEspacios = () => {
                     </div>
                 )}
 
-                {/* Lista de espacios agrupados por ubicación */}
+                {/* Plano 2D general */}
                 {!loading && !error && (
-                    <div className="space-y-4">
-                        {Object.keys(groupedEspacios).length === 0 ? (
-                            <div className="text-center py-12 bg-gray-50 rounded-lg">
-                                <div className="text-gray-500">
-                                    <svg className="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                    <p className="text-lg font-medium">No se encontraron {selectedType.toLowerCase()}s</p>
-                                    <p className="text-sm mt-1">No hay espacios disponibles de este tipo en este momento.</p>
-                                </div>
-                            </div>
-                        ) : (
-                            Object.entries(groupedEspacios).map(([ubicacion, espaciosList]) => (
-                                <div key={ubicacion} className="bg-white rounded-lg shadow overflow-hidden">
-                                    <button
-                                        onClick={() => toggleLocation(ubicacion)}
-                                        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                                    >
-                                        <div className="flex items-center">
-                                            <svg 
-                                                className={`w-5 h-5 mr-3 text-gray-500 transform transition-transform ${
-                                                    expandedLocations[ubicacion] ? 'rotate-90' : ''
-                                                }`} 
-                                                fill="none" 
-                                                viewBox="0 0 24 24" 
-                                                stroke="currentColor"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
-                                            <h3 className="text-lg font-medium text-gray-900">📍 {ubicacion}</h3>
-                                        </div>
-                                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                                            {espaciosList.length} {espaciosList.length === 1 ? 'espacio' : 'espacios'}
-                                        </span>
-                                    </button>
-                                    
-                                    {expandedLocations[ubicacion] && (
-                                        <div className="border-t border-gray-200">
-                                            {espaciosList.map(espacio => (
-                                                <div
-                                                    key={espacio.id}
-                                                    onClick={() => selectSpace(espacio)}
-                                                    className="px-6 py-4 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <h4 className="font-medium text-gray-900">{espacio.nombre}</h4>
-                                                            <p className="text-sm text-gray-600 mt-1">
-                                                                ID: {espacio.id} | Capacidad: {espacio.capacidad} personas
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className={`px-3 py-1 text-xs rounded-full ${
-                                                                espacio.disponible 
-                                                                    ? 'bg-green-100 text-green-800' 
-                                                                    : 'bg-red-100 text-red-800'
-                                                            }`}>
-                                                                {espacio.disponible ? 'Disponible' : 'No disponible'}
-                                                            </span>
-                                                            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))
-                        )}
-                    </div>
+                    renderMain2D()
                 )}
+
+            {/* Modal de Espacio No Disponible */}
+            {showUnavailableModal && unavailableSpace && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full transform transition-all">
+                        <div className="text-center">
+                            {/* Icono de no disponible */}
+                            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                                <svg className="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                Espacio No Disponible
+                            </h3>
+                            
+                            
+                            
+                            <p className="text-gray-600 mb-6">
+                                Este espacio no se encuentra disponible para consultas o reservas en este momento. 
+                                Por favor, contacte al administrador del sistema para más información.
+                            </p>
+                            
+                            <button
+                                onClick={() => setShowUnavailableModal(false)}
+                                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
         </DashboardLayout>
     );
 };
 
-export default ConsultaEspacios;
+export default ConsultaDisponibilidad;

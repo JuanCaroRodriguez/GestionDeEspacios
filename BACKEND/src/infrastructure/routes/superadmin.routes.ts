@@ -31,6 +31,36 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// PUT - Actualizar super admin
+router.put("/:id", async (req, res) => {
+  try {
+    const { id_empresa } = req.body;
+
+    const superAdmin = await superAdminRepository.findById(req.params.id);
+    if (!superAdmin) {
+      return res.status(404).json({ error: "Super admin no encontrado" });
+    }
+
+    // Preparar datos de actualización
+    const updateData: any = {};
+
+    // Agregar id_empresa si se proporciona
+    if (id_empresa !== undefined) {
+      updateData.id_empresa = id_empresa;
+    }
+
+    // Actualizar el superadmin
+    const updatedSuperAdmin = await superAdminRepository.update(
+      req.params.id,
+      updateData,
+    );
+    res.json(updatedSuperAdmin);
+  } catch (error) {
+    console.error("Error al actualizar superadmin:", error);
+    res.status(500).json({ error: "Error al actualizar super admin" });
+  }
+});
+
 // Rutas para gestión de usuarios
 router.post("/usuarios", async (req, res) => {
   try {
@@ -189,9 +219,19 @@ router.post("/administradores", async (req, res) => {
 // Rutas para gestión de espacios
 router.post("/espacios", async (req, res) => {
   try {
-    const { id, nombre, tipo, capacidad, ubicacion } = req.body;
+    const { id, nombre, tipo, capacidad, bloque, piso, salon, id_empresa } =
+      req.body;
 
-    if (!id || !nombre || !tipo || !capacidad || !ubicacion) {
+    if (
+      !id ||
+      !nombre ||
+      !tipo ||
+      !capacidad ||
+      !bloque ||
+      piso === undefined ||
+      !salon ||
+      !id_empresa
+    ) {
       return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
 
@@ -207,7 +247,10 @@ router.post("/espacios", async (req, res) => {
       nombre,
       tipo,
       capacidad,
-      ubicacion,
+      bloque,
+      piso,
+      salon,
+      id_empresa,
     );
 
     const createdEspacio = await espacioRepository.create(espacio);

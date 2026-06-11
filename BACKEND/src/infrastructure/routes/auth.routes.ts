@@ -14,7 +14,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, contraseña, tipo } = req.body;
 
-    console.log("Login attempt:", { email, tipo }); // Debug
+    
 
     // Validaciones
     if (!email || !contraseña || !tipo) {
@@ -46,6 +46,7 @@ router.post("/login", async (req, res) => {
             nombre: user.getNombre(),
             email: user.getEmail(),
             tipo: "superadmin",
+            id_empresa: (user as any).getIdEmpresa() || null,
             permisos: [
               "crear_espacios",
               "eliminar_espacios",
@@ -92,14 +93,14 @@ router.post("/login", async (req, res) => {
 
     // Verificar si se encontró el usuario
     if (!user) {
-      console.log("User not found for:", { email, tipo }); // Debug
+      
       return res.status(401).json({
         error: "Credenciales inválidas",
         message: "El email no está registrado para este tipo de usuario",
       });
     }
 
-    console.log("User found:", user.getId()); // Debug
+    
 
     // Verificar contraseña usando bcrypt
     const isPasswordValid = await bcrypt.compare(
@@ -107,7 +108,7 @@ router.post("/login", async (req, res) => {
       user.getContraseña(),
     );
     if (!isPasswordValid) {
-      console.log("Password mismatch for:", email); // Debug
+      
       return res.status(401).json({
         error: "Credenciales inválidas",
         message: "La contraseña es incorrecta",
@@ -159,6 +160,7 @@ router.get("/profile/:tipo/:email", async (req, res) => {
           nombre: user.getNombre(),
           email: user.getEmail(),
           tipo: "superadmin",
+          id_empresa: (user as any).getIdEmpresa() || null,
           permisos: [
             "crear_espacios",
             "eliminar_espacios",

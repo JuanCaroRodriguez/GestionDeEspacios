@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import administradoresService from '@api/services/administradores.service';
+import useSession from '@context/Auth/useSession';
+import { FiRefreshCw, FiUserPlus, FiEdit, FiTrash2, FiUsers } from 'react-icons/fi';
 
 const GestionAdministradores = () => {
+    const { session } = useSession();
     const [administradores, setAdministradores] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -24,9 +27,14 @@ const GestionAdministradores = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const data = await administradoresService.getAll();
+                
+                // Obtener id_empresa del usuario logueado (igual que en GestionEspacios)
+                const idEmpresa = session?.user?.id_empresa;
+                
+                
+                // Usar getByEmpresa() para filtrar por empresa
+                const data = await administradoresService.getByEmpresa(idEmpresa);
                 setAdministradores(data);
-                console.log('Administradores cargados:', data);
             } catch (err) {
                 console.error('Error al cargar administradores:', err);
                 setError('No se pudieron cargar los administradores. Por favor, intente nuevamente.');
@@ -49,7 +57,7 @@ const GestionAdministradores = () => {
         };
 
         fetchAdministradores();
-    }, []);
+    }, [session]);
 
     const handleEditAdministrador = (administrador) => {
         setEditMode(true);
@@ -166,9 +174,9 @@ const GestionAdministradores = () => {
 
             const nuevoEstado = administrador.estado === 'activo' ? 'inactivo' : 'activo';
             
-            // Llamar al endpoint de SuperAdmin para cambiar estado
-            await administradoresService.toggleEstado(id); // Reutilizar el mismo endpoint
-            console.log('Estado actualizado para el administrador:', id);
+            // Llamar al endpoint para cambiar estado
+            await administradoresService.updateEstado(id, nuevoEstado);
+            console.log('Estado actualizado para el administrador:', id, 'nuevo estado:', nuevoEstado);
             
             // Actualizar estado local
             setAdministradores(administradores.map(admin => 
@@ -242,19 +250,24 @@ const GestionAdministradores = () => {
         <DashboardLayout title="Gestión de Administradores">
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">👨‍💼 Gestión de Administradores</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                        <FiUsers className="w-6 h-6 mr-2" />
+                        Gestión de Administradores
+                    </h1>
                     <div className="flex space-x-3">
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                            className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                         >
-                            🔄 Actualizar
+                            <FiRefreshCw className="w-4 h-4 mr-2" />
+                            Actualizar
                         </button>
                         <button
                             onClick={() => setShowModal(true)}
-                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         >
-                            ➕ Crear Administrador
+                            <FiUserPlus className="w-4 h-4 mr-2" />
+                            Crear Administrador
                         </button>
                     </div>
                 </div>
@@ -310,13 +323,13 @@ const GestionAdministradores = () => {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        ID
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Administrador
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Email
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Acciones
@@ -326,7 +339,7 @@ const GestionAdministradores = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-4 text-center">
+                                        <td colSpan="4" className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center">
                                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
                                                 <span>Cargando...</span>
@@ -336,12 +349,9 @@ const GestionAdministradores = () => {
                                 ) : (
                                     administradoresFiltrados.map((administrador) => (
                                         <tr key={administrador.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {administrador.id}
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <span className="text-lg mr-2">👨‍💼</span>
+                                                    <FiUsers className="w-5 h-5 mr-2 text-blue-600" />
                                                     <div>
                                                         <div className="text-sm font-medium text-gray-900">{administrador.nombre}</div>
                                                     </div>
@@ -349,19 +359,38 @@ const GestionAdministradores = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {administrador.email}
-                                            </td> 
-                                            <td className="px-6 py-4 whitespAace-nowrap text-sm text-gray-900">
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <label className="flex items-center cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={administrador.estado === 'activo'}
+                                                        onChange={() => handleToggleEstado(administrador.id)}
+                                                        className="sr-only"
+                                                    />
+                                                    <div className="relative">
+                                                        <div className={`block w-14 h-8 rounded-full ${administrador.estado === 'activo' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                        <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${administrador.estado === 'activo' ? 'translate-x-6' : ''}`}></div>
+                                                    </div>
+                                                    <span className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${getEstadoColor(administrador.estado)}`}>
+                                                        {administrador.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                                    </span>
+                                                </label>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <div className="flex space-x-2">
                                                     <button
                                                         onClick={() => handleEditAdministrador(administrador)}
-                                                        className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                                        className="flex items-center px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                                                     >
+                                                        <FiEdit className="w-3 h-3 mr-1" />
                                                         Editar
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteAdministrador(administrador.id)}
-                                                        className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                                                        className="flex items-center px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                                                     >
+                                                        <FiTrash2 className="w-3 h-3 mr-1" />
                                                         Eliminar
                                                     </button>
                                                 </div>
@@ -440,8 +469,9 @@ const GestionAdministradores = () => {
                                 <button
                                     type="button"
                                     onClick={handleCreateAdministrador}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
+                                    <FiUserPlus className="w-4 h-4 mr-2" />
                                     Crear Administrador
                                 </button>
                             </div>

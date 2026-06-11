@@ -1,47 +1,65 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
 
 export interface IEspacio extends Document {
-    id: string;
-    nombre: string;
-    tipo: string;
-    capacidad: number;
-    ubicacion: string;
-    disponible: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  nombre: string;
+  tipo: string;
+  capacidad: number;
+  bloque: string;
+  piso: number;
+  salon: string;
+  id_empresa: string;
+  disponible: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const EspacioSchema = new Schema<IEspacio>({
+const EspacioSchema = new Schema<IEspacio>(
+  {
     id: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
     nombre: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     tipo: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     capacidad: {
-        type: Number,
-        required: true,
-        min: 1
+      type: Number,
+      required: true,
+      min: 0,
     },
-    ubicacion: {
-        type: String,
-        required: true
+    bloque: {
+      type: String,
+      required: true,
+    },
+    piso: {
+      type: Number,
+      required: true,
+    },
+    salon: {
+      type: String,
+      required: true,
+    },
+    id_empresa: {
+      type: String,
+      required: true,
     },
     disponible: {
-        type: Boolean,
-        default: true,
-        required: true
-    }
-}, {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
+  },
+  {
     timestamps: true,
-    collection: 'espacios'
-});
+    collection: "espacios",
+  },
+);
 
-export const EspacioModel = model<IEspacio>('Espacio', EspacioSchema);
+export const EspacioModel = model<IEspacio>("Espacio", EspacioSchema);

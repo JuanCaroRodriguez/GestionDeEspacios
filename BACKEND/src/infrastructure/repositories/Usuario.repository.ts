@@ -62,6 +62,11 @@ export class UsuarioRepository implements IUsuarioRepository {
     return usuarios.map((usuario) => this.mapToEntity(usuario));
   }
 
+  async findByEmpresa(idEmpresa: string): Promise<Usuario[]> {
+    const usuarios = await UsuarioModel.find({ id_empresa: idEmpresa });
+    return usuarios.map((usuario) => this.mapToEntity(usuario));
+  }
+
   async existsByEmail(email: string): Promise<boolean> {
     const usuario = await UsuarioModel.findOne({ email });
     return !!usuario;

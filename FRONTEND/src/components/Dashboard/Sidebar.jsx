@@ -1,74 +1,75 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@tools/CONSTANTS';
+import { FiSearch, FiHome, FiUsers, FiUserPlus, FiCalendar, FiLogOut } from 'react-icons/fi';
 
-const Sidebar = ({ user }) => {
+const Sidebar = ({ user, empresa }) => {
     const location = useLocation();
-
+    
     const menuItems = {
         superadmin: [
             {
-                title: 'Consulta de espacios',
-                icon: '🔍',
+                title: 'Consulta de disponibilidad',
+                icon: <FiSearch className="w-5 h-5" />,
                 path: '/dashboard/consulta-espacios',
                 description: 'Consultar horarios y disponibilidad'
             },
             {
                 title: 'Gestión de espacios',
-                icon: '🏢',
+                icon: <FiHome className="w-5 h-5" />,
                 path: '/dashboard/espacios',
                 description: 'Administrar espacios y laboratorios'
             },
             {
                 title: 'Gestión de usuarios',
-                icon: '👥',
+                icon: <FiUsers className="w-5 h-5" />,
                 path: '/dashboard/usuarios',
                 description: 'Administrar usuarios del sistema'
             },
             {
                 title: 'Gestión de administradores',
-                icon: '👨‍💼',
+                icon: <FiUserPlus className="w-5 h-5" />,
                 path: '/dashboard/administradores',
                 description: 'Administrar administradores del sistema'
             }
         ],
         administrador: [
             {
-                title: 'Consulta de espacios',
-                icon: '🔍',
+                title: 'Consulta de disponibilidad',
+                icon: <FiSearch className="w-5 h-5" />,
                 path: '/dashboard/consulta-espacios',
                 description: 'Consultar horarios y disponibilidad'
             },
             {
                 title: 'Evaluar reservas',
-                icon: '📋',
+                icon: <FiCalendar className="w-5 h-5" />,
                 path: '/dashboard/evaluar-reservas',
                 description: 'Evaluar solicitudes de laboratorios'
             }
         ],
         estudiante: [
             {
-                title: 'Consulta de espacios',
-                icon: '🔍',
+                title: 'Consulta de disponibilidad',
+                icon: <FiSearch className="w-5 h-5" />,
                 path: '/dashboard/consulta-espacios',
                 description: 'Consultar horarios y disponibilidad'
             },
             {
                 title: 'Mis reservas',
-                icon: '📅',
+                icon: <FiCalendar className="w-5 h-5" />,
                 path: '/dashboard/mis-reservas',
                 description: 'Ver y gestionar mis reservas'
             }
         ],
         docente: [
             {
-                title: 'Consulta de espacios',
-                icon: '🔍',
+                title: 'Consulta de disponibilidad',
+                icon: <FiSearch className="w-5 h-5" />,
                 path: '/dashboard/consulta-espacios',
                 description: 'Consultar horarios y disponibilidad'
             },
             {
                 title: 'Mis reservas',
-                icon: '📅',
+                icon: <FiCalendar className="w-5 h-5" />,
                 path: '/dashboard/mis-reservas',
                 description: 'Ver y gestionar mis reservas'
             }
@@ -132,7 +133,7 @@ const Sidebar = ({ user }) => {
                         }}
                         className="w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors flex items-center space-x-3"
                     >
-                        <span>🚪</span>
+                        <FiLogOut className="w-5 h-5" />
                         <span>Cerrar sesión</span>
                     </button>
                 </div>

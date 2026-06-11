@@ -7,6 +7,16 @@ const administradorController = new AdministradorController();
 // GET - Obtener todos los administradores
 router.get("/", (req, res) => administradorController.getAll(req, res));
 
+// GET - Obtener administradores por empresa (más específico primero)
+router.get("/empresa/:idEmpresa", (req, res) =>
+  administradorController.getByEmpresa(req, res),
+);
+
+// PUT - Actualizar estado de administrador
+router.put("/:id/estado", (req, res) =>
+  administradorController.updateEstado(req, res),
+);
+
 // GET - Obtener administrador por ID
 router.get("/:id", (req, res) => administradorController.getById(req, res));
 

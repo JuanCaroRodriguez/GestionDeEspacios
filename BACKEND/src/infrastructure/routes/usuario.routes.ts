@@ -14,19 +14,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET - Obtener usuario por ID
-router.get("/:id", async (req, res) => {
-  try {
-    const usuario = await usuarioRepository.findById(req.params.id);
-    if (!usuario) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-    res.json(usuario);
-  } catch (error) {
-    res.status(500).json({ error: "Error al obtener usuario" });
-  }
-});
-
 // GET - Obtener usuario por email
 router.get("/email/:email", async (req, res) => {
   try {
@@ -53,6 +40,30 @@ router.get("/tipo/:tipo", async (req, res) => {
     res.json(usuarios);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener usuarios por tipo" });
+  }
+});
+
+// GET - Obtener usuarios por empresa
+router.get("/empresa/:idEmpresa", async (req, res) => {
+  try {
+    const { idEmpresa } = req.params;
+    const usuarios = await usuarioRepository.findByEmpresa(idEmpresa);
+    res.json(usuarios);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener usuarios por empresa" });
+  }
+});
+
+// GET - Obtener usuario por ID
+router.get("/:id", async (req, res) => {
+  try {
+    const usuario = await usuarioRepository.findById(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json(usuario);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener usuario" });
   }
 });
 

@@ -64,20 +64,16 @@ function SessionState({ children }) {
     const session = await AuthToken()
     const isAuthRute=window.location.pathname === ROUTES.auth.login || window.location.pathname === ROUTES.auth.register || window.location.pathname === ROUTES.auth.welcome
   
-    console.log('AuthVerify - Session:', session); // Debug
-    console.log('AuthVerify - isAuthRoute:', isAuthRute); // Debug
-    console.log('AuthVerify - current path:', window.location.pathname); // Debug
-  
     if (isAuthRute && session) {
-      console.log('Redirecting to dashboard...'); // Debug
+      
       setSession(session)
       navigate(ROUTES.dashboard.home)
     }else if (!isAuthRute && !session) {
-      console.log('Redirecting to welcome...'); // Debug
+      
       setSession(null)
       navigate(ROUTES.auth.welcome)
     }else{
-      console.log('Setting session...'); // Debug
+      
       setSession(session)
     }
   }, [navigate])

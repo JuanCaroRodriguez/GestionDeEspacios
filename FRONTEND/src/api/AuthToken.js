@@ -5,7 +5,6 @@ let requestInterceptorId = null;
 
 const AuthToken = async () => {
   const session = obtenerDeLocalStorage("session");
-  console.log("AuthToken - Session from localStorage:", session); // Debug
 
   // Si hay un token, agrega el interceptor de solicitud
   if (session) {
