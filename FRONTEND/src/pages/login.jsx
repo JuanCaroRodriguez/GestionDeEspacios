@@ -3,9 +3,15 @@ import Logo from "../assets/LogoIsoft.png";
 import useSession from "../context/Auth/useSession";
 import { useState } from "react";
 import { ROUTES } from "../tools/CONSTANTS";
+import LoginModals from "../components/LoginModals";
+import { useNavigate } from "react-router-dom"
 
 const Login = () => {
     const [responseError, setResponseError] = useState('')
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [showFailureModal, setShowFailureModal] = useState(false)
+    const [showInactiveModal, setShowInactiveModal] = useState(false)
+    const [showInvalidCredentialsModal, setShowInvalidCredentialsModal] = useState(false)
     const {
         handleSubmit,
         getFieldProps,
@@ -14,26 +20,84 @@ const Login = () => {
         errors,
     } = useFormValidate();
 
+    const navigate = useNavigate()
     const { handleLogin, loading_auth } = useSession()
 
+    const closeAllModals = () => {
+        setShowSuccessModal(false)
+        setShowFailureModal(false)
+        setShowInactiveModal(false)
+        setShowInvalidCredentialsModal(false)
+        setResponseError('')
+    }
+
+    const handleContinue = () => {
+         navigate(ROUTES.dashboard.home)
+    }
+    
     const onSubmit = (formData) => {
-        console.log('Frontend - Submitting form data:', formData); // Debug frontend
         handleLogin(formData)
             .then((response) => {
-                console.log('Frontend - Login response:', response); // Debug response
-                if(response){
-                    resetForm()
+
+                if(response.estado === 'sin errores') {   
+                    console.log(response.user)                 
+                    setShowSuccessModal(true)
+                    return
                 }
+                // Verificar si el usuario está inactivo antes de permitir el login
+                if(response.estado === 'inactivo') {                    
+                    // Usuario inactivo - mostrar modal correspondiente y no permitir login
+                    setShowInactiveModal(true)
+                    return
+                }
+                if(response.estado === 'Credenciales no validas') {                    
+                    // Usuario inactivo - mostrar modal correspondiente y no permitir login
+                    setShowInvalidCredentialsModal(true)
+                    return
+                }
+                if(response.estado === 'Error') {                    
+                    // Usuario inactivo - mostrar modal correspondiente y no permitir login
+                    setShowFailureModal(true)
+                    return
+                }
+                
+                setShowFailureModal(true)
+                return
+
+                
+                    
             })
             .catch((error) => {
-                console.log('Frontend - Login error:', error); // Debug error
+                
+                // Manejar diferentes tipos de errores
                 if (error.response) {
-                    console.log('Frontend - Error response data:', error.response.data); // Debug error response
-                    if (error.response.data.message) {
+                    
+                    if (error.response.data && error.response.data.message) {
+                        const errorMessage = error.response.data.message.toLowerCase()
+                        
+                        // Analizar el tipo de error y mostrar el modal correspondiente
+                        if (errorMessage.includes('inactivo') || errorMessage.includes('deshabilitado') || errorMessage.includes('bloqueado') || error.response.status === 403) {
+                            setShowInactiveModal(true)
+                        } else if (errorMessage.includes('credenciales') || errorMessage.includes('contraseña') || errorMessage.includes('email') || errorMessage.includes('inválidas') || error.response.status === 401) {
+                            setShowInvalidCredentialsModal(true)
+                        } else {
+                            setShowFailureModal(true)
+                        }
+                        
                         setResponseError(error.response.data.message)
-                    }else{
+                    } else {
                         console.error(error)
+                        setShowFailureModal(true)
                     }
+                } else if (error.request) {
+                    // Error de red - no hay respuesta del servidor
+                    setShowFailureModal(true)
+                    setResponseError('Error de conexión. Por favor, verifica tu conexión a internet.')
+                } else {
+                    // Error del sistema o configuración
+                    console.error(error)
+                    setShowFailureModal(true)
+                    setResponseError('Error inesperado del sistema.')
                 }
             })
     };
@@ -92,6 +156,16 @@ const Login = () => {
                 </div>
 
             </div>
+        
+        {/* Modals de Login */}
+        <LoginModals
+            showSuccessModal={showSuccessModal}
+            showFailureModal={showFailureModal}
+            showInactiveModal={showInactiveModal}
+            showInvalidCredentialsModal={showInvalidCredentialsModal}
+            closeAllModals={closeAllModals}
+            onContinue={handleContinue}
+        />
         </div>
     );
 };

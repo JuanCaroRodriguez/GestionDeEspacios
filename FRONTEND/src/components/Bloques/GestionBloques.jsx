@@ -15,7 +15,8 @@ const GestionBloques = ({ empresa }) => {
     // Formulario para añadir piso
     const [pisoForm, setPisoForm] = useState({
         numero: 1,
-        cantidadSalones: 4
+        cantidadSalones: 4,
+        capacidadSalones: 30
     });
 
     useEffect(() => {
@@ -183,7 +184,7 @@ const GestionBloques = ({ empresa }) => {
                                                     <div>
                                                         <span className="font-medium text-sm">Piso {piso.numero}</span>
                                                         <span className="text-sm text-gray-500 ml-2">
-                                                            ({piso.cantidadSalones} salones)
+                                                            ({piso.cantidadSalones} Espacios)
                                                         </span>
                                                     </div>
                                                     <button

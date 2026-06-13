@@ -58,7 +58,7 @@ const ProtectedRoute = ({ children, requireEmpresa = false }) => {
 
     // Si no hay sesión, redirigir al login
     if (!session?.user) {
-        return <Navigate to="/auth/welcome" state={{ from: location }} replace />;
+        return <Navigate to="/auth" state={{ from: location }} replace />;
     }
 
     // Leer sesión actual del localStorage para la decisión

@@ -12,6 +12,10 @@ const GestionAdministradores = () => {
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [editAdminId, setEditAdminId] = useState(null);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [adminToDelete, setAdminToDelete] = useState(null);
+    const [successOperationType, setSuccessOperationType] = useState('');
     const [formData, setFormData] = useState({
         nombre: '',
         email: '',
@@ -38,19 +42,7 @@ const GestionAdministradores = () => {
             } catch (err) {
                 console.error('Error al cargar administradores:', err);
                 setError('No se pudieron cargar los administradores. Por favor, intente nuevamente.');
-                // Datos de fallback para desarrollo
-                setAdministradores([
-                    {
-                        id: 'administrador-001',
-                        nombre: 'Administrador de Sistemas',
-                        email: 'administrador@gestion.com',
-                        tipo: 'administrador',
-                        estado: 'activo',
-                        permisos: ['evaluar_reservas_laboratorios'],
-                        fechaRegistro: '2024-01-10',
-                        ultimaSesion: '2024-05-06 09:00'
-                    }
-                ]);
+                
             } finally {
                 setLoading(false);
             }
@@ -100,56 +92,103 @@ const GestionAdministradores = () => {
         }
 
         try {
-            if (editMode) {
-                // Modo edición
-                const updateData = {
-                    nombre: formData.nombre,
-                    email: formData.email
-                };
-
-                // Agregar contraseña solo si se proporcionó
-                if (formData.contraseña) {
-                    updateData.contraseña = formData.contraseña;
+            // Verificar si el email ya existe
+            try {
+                const administradorExistente = await administradoresService.getByEmail(formData.email);
+                if (administradorExistente) {
+                    alert('El email ya está registrado en el sistema');
+                    return;
                 }
-
-                const response = await administradoresService.update(editAdminId, updateData);
-                console.log('Administrador actualizado:', response);
-                
-                // Actualizar estado local
-                setAdministradores(administradores.map(admin => 
-                    admin.id === editAdminId ? { ...admin, ...response } : admin
-                ));
-                
-                alert('Administrador actualizado exitosamente');
-            } else {
-                // Modo creación
-                // Generar ID automático
-                const timestamp = Date.now();
-                const random = Math.floor(Math.random() * 1000);
-                const idGenerado = `administrador-${timestamp}-${random}`;
-
-                // Crear nuevo administrador - usando el endpoint de SuperAdmin
-                const nuevoAdministrador = {
-                    id: idGenerado,
-                    nombre: formData.nombre,
-                    email: formData.email,
-                    contraseña: formData.contraseña,
-                    tipo: 'administrador',
-                    permisos: ['evaluar_reservas_laboratorios'],
-                    estado: 'activo'
-                };
-
-                const response = await administradoresService.create(nuevoAdministrador);
-                console.log('Administrador creado:', response);
-                
-                // Actualizar estado local
-                setAdministradores([...administradores, response]);
-                
-                alert('Administrador creado exitosamente');
+            } catch (error) {
+                // Si hay error, asumimos que no existe y continuamos
             }
 
-            // Cerrar modal y resetear formulario
+            // Modo creación
+            // Obtener id_empresa del usuario logueado
+            const idEmpresa = session?.user?.id_empresa;
+            if (!idEmpresa) {
+                alert('No se puede crear el administrador: no hay información de la empresa');
+                return;
+            }
+
+            // Generar ID automático
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000);
+            const idGenerado = `administrador-${timestamp}-${random}`;
+
+            // Crear nuevo administrador
+            const nuevoAdministrador = {
+                id: idGenerado,
+                nombre: formData.nombre,
+                email: formData.email,
+                contraseña: formData.contraseña,
+                tipo: 'administrador',
+                permisos: ['evaluar_reservas_laboratorios'],
+                estado: 'activo',
+                id_empresa: idEmpresa
+            };
+
+            const response = await administradoresService.create(nuevoAdministrador);
+            console.log('Administrador creado:', response);
+            
+            // Actualizar estado local
+            setAdministradores([...administradores, response]);
             setShowModal(false);
+            setSuccessOperationType('creado');
+            setShowSuccessModal(true);
+            setFormData({
+                nombre: '',
+                email: '',
+                contraseña: ''
+            });
+        } catch (error) {
+            console.error('Error al crear administrador:', error);
+            alert('Error al crear el administrador. Por favor, intente nuevamente.');
+        }
+    };
+
+    const handleUpdateAdministrador = async () => {
+        // Validaciones
+        if (!formData.nombre || !formData.email) {
+            alert('Por favor complete todos los campos obligatorios');
+            return;
+        }
+
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            alert('Por favor ingrese un email válido');
+            return;
+        }
+
+        // Validar contraseña si se proporciona
+        if (formData.contraseña && formData.contraseña.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+
+        try {
+            const updateData = {
+                nombre: formData.nombre,
+                email: formData.email
+            };
+
+            // Agregar contraseña solo si se proporcionó
+            if (formData.contraseña) {
+                updateData.contraseña = formData.contraseña;
+            }
+
+            const response = await administradoresService.update(editAdminId, updateData);
+            console.log('Administrador actualizado:', response);
+            
+            // Actualizar estado local
+            setAdministradores(administradores.map(admin => 
+                admin.id === editAdminId ? { ...admin, ...response } : admin
+            ));
+            
+            setShowModal(false);
+            setSuccessOperationType('actualizado');
+            setShowSuccessModal(true);
             setEditMode(false);
             setEditAdminId(null);
             setFormData({
@@ -158,8 +197,8 @@ const GestionAdministradores = () => {
                 contraseña: ''
             });
         } catch (error) {
-            console.error('Error al guardar administrador:', error);
-            alert('Error al guardar el administrador. Por favor, intente nuevamente.');
+            console.error('Error al actualizar administrador:', error);
+            alert('Error al actualizar el administrador. Por favor, intente nuevamente.');
         }
     };
 
@@ -188,19 +227,41 @@ const GestionAdministradores = () => {
         }
     };
 
-    const handleDeleteAdministrador = async (id) => {
-        if (confirm('¿Está seguro de que desea eliminar este administrador? Esta acción no se puede deshacer.')) {
-            try {
-                await administradoresService.delete(id); // Reutilizar el mismo endpoint
-                // Actualizar estado local
-                setAdministradores(administradores.filter(admin => admin.id !== id));
-                console.log('Administrador eliminado:', id);
-                alert('Administrador eliminado exitosamente');
-            } catch (error) {
-                console.error('Error al eliminar administrador:', error);
-                alert('Error al eliminar el administrador');
-            }
+    const handleDeleteAdministrador = (id) => {
+        setAdminToDelete(id);
+        setShowDeleteConfirmModal(true);
+    };
+
+    const confirmDeleteAdministrador = async () => {
+        try {
+            await administradoresService.delete(adminToDelete); // Reutilizar el mismo endpoint
+            // Actualizar estado local
+            setAdministradores(administradores.filter(admin => admin.id !== adminToDelete));
+            console.log('Administrador eliminado:', adminToDelete);
+            
+            // Cerrar modal de confirmación y mostrar modal de éxito
+            setShowDeleteConfirmModal(false);
+            setSuccessOperationType('eliminado');
+            setShowSuccessModal(true);
+            
+            // Resetear el administrador a eliminar
+            setAdminToDelete(null);
+        } catch (error) {
+            console.error('Error al eliminar administrador:', error);
+            alert('Error al eliminar el administrador');
+            setShowDeleteConfirmModal(false);
+            setAdminToDelete(null);
         }
+    };
+
+    const cancelDeleteAdministrador = () => {
+        setShowDeleteConfirmModal(false);
+        setAdminToDelete(null);
+    };
+
+    const closeSuccessModal = () => {
+        setShowSuccessModal(false);
+        setSuccessOperationType('');
     };
 
     const handleInputChange = (e) => {
@@ -309,7 +370,7 @@ const GestionAdministradores = () => {
                                 name="busqueda"
                                 value={filtros.busqueda}
                                 onChange={handleFiltroChange}
-                                placeholder="Buscar por nombre o email..."
+                                placeholder="Buscar"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
@@ -468,16 +529,88 @@ const GestionAdministradores = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={handleCreateAdministrador}
+                                    onClick={editMode ? handleUpdateAdministrador : handleCreateAdministrador}
                                     className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <FiUserPlus className="w-4 h-4 mr-2" />
-                                    Crear Administrador
+                                    {editMode ? (
+                                        <>
+                                            <FiEdit className="w-4 h-4 mr-2" />
+                                            Actualizar Administrador
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiUserPlus className="w-4 h-4 mr-2" />
+                                            Crear Administrador
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
+
+            {/* Modal de Confirmación de Eliminación */}
+            {showDeleteConfirmModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                            <FiTrash2 className="w-6 h-6 text-red-600" />
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            ¿Eliminar Administrador?
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-6 text-center">
+                            ¿Está seguro de que desea eliminar este administrador? Esta acción no se puede deshacer.
+                        </p>
+                        
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={cancelDeleteAdministrador}
+                                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDeleteAdministrador}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Éxito */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            ¡Administrador {successOperationType === 'creado' ? 'Creado' : successOperationType === 'actualizado' ? 'Actualizado' : 'Eliminado'}!
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-6 text-center">
+                            El administrador ha sido {successOperationType === 'creado' ? 'creado' : successOperationType === 'actualizado' ? 'actualizado' : 'eliminado'} exitosamente del sistema.
+                        </p>
+                        
+                        <button
+                            onClick={closeSuccessModal}
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            )}
+
             </div>
         </DashboardLayout>
     );

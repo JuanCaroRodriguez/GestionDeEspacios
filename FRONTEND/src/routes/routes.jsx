@@ -12,10 +12,13 @@ const componentMap = {
   "Dashboard": () => import("../pages/Dashboard"),
   "GestionEspacios": () => import("../pages/GestionEspacios"),
   "ConsultaDisponibilidad": () => import("../pages/ConsultaEspacios"),
+  "MisReservas": () => import("../pages/MisReservas"),
   "GestionUsuarios": () => import("../pages/GestionUsuarios"),
   "GestionAdministradores": () => import("../pages/GestionAdministradores"),
+  "EvaluarReservas": () => import("../pages/EvaluarReservas"),
   "Inicio": () => import("../pages/Inicio"),
   "Perfil": () => import("../pages/Perfil"),
+  "Error404": () => import("../pages/Error404"),
 };
 
 const router = [
@@ -26,10 +29,6 @@ const router = [
         <Outlet />
       </SessionState>,
     children: [
-      {
-        path: ROUTES.auth.welcome,
-        element: <LoadComponent component="Portada" componentsMap={componentMap} loading={<></>} />,
-      },
       {
         path: ROUTES.auth.login,
         element: <LoadComponent component="Login" componentsMap={componentMap} loading={<></>} />,
@@ -55,6 +54,10 @@ const router = [
         element: <LoadComponent component="ConsultaDisponibilidad" componentsMap={componentMap} loading={<></>} />,
       },
       {
+        path: "/dashboard/mis-reservas",
+        element: <LoadComponent component="MisReservas" componentsMap={componentMap} loading={<></>} />,
+      },
+      {
         path: "/dashboard/usuarios",
         element: <LoadComponent component="GestionUsuarios" componentsMap={componentMap} loading={<></>} />,
       },
@@ -63,8 +66,12 @@ const router = [
         element: <LoadComponent component="GestionAdministradores" componentsMap={componentMap} loading={<></>} />,
       },
       {
-        path: "*",
-        element: <>Error 404</>,
+        path: "/dashboard/evaluar-reservas",
+        element: <LoadComponent component="EvaluarReservas" componentsMap={componentMap} loading={<></>} />,
+      },
+      {
+        path: ROUTES.errors.notFound,
+        element: <LoadComponent component="Error404" componentsMap={componentMap} loading={<></>} />,
       },
     ],
   },

@@ -7,12 +7,14 @@ export const ROL = {
 
 export const ROUTES = {
   auth: {
-    welcome: "/welcome",
     login: "/auth",
   },
   dashboard: {
     home: "/",
     profile: "/profile",
+  },
+  errors: {
+    notFound: "*",
   },
 };
 

@@ -3,7 +3,7 @@ import DashboardLayout from '@components/Layout/DashboardLayout';
 import usuariosService from '@api/services/usuarios.service';
 import administradoresService from '@api/services/administradores.service';
 import useSession from '@context/Auth/useSession';
-import { FiUsers, FiUser, FiTool, FiPlus } from 'react-icons/fi';
+import { FiUsers, FiUser, FiTool, FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
 
 const GestionUsuarios = () => {
     const { session } = useSession();
@@ -14,6 +14,10 @@ const GestionUsuarios = () => {
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [editUserId, setEditUserId] = useState(null);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [usuarioToDelete, setUsuarioToDelete] = useState(null);
+    const [successOperationType, setSuccessOperationType] = useState('');
     const [formData, setFormData] = useState({
         nombre: '',
         email: '',
@@ -52,28 +56,7 @@ const GestionUsuarios = () => {
                 console.error('Error al cargar usuarios:', err);
                 setError('No se pudieron cargar los usuarios. Por favor, intente nuevamente.');
                 // Datos de fallback para desarrollo
-                setUsuarios([
-                    {
-                        id: 'estudiante-001',
-                        nombre: 'Juan Estudiante',
-                        email: 'juan.estudiante@gestion.com',
-                        tipo: 'estudiante',
-                        activo: true,
-                        fechaRegistro: '2024-01-15',
-                        ultimaSesion: '2024-05-06 14:30'
-                    }
-                ]);
-                setAdministradores([
-                    {
-                        id: 'administrador-001',
-                        nombre: 'Administrador de Sistemas',
-                        email: 'administrador@gestion.com',
-                        tipo: 'administrador',
-                        activo: true,
-                        fechaRegistro: '2024-01-10',
-                        ultimaSesion: '2024-05-06 09:00'
-                    }
-                ]);
+                
             } finally {
                 setLoading(false);
             }
@@ -102,7 +85,7 @@ const GestionUsuarios = () => {
             return;
         }
 
-        // Verificar si el email ya existe (local y API)
+        // Verificar si el email ya existe (local)
         if (usuarios.some(usuario => usuario.email === formData.email)) {
             alert('El email ya está registrado');
             return;
@@ -120,6 +103,13 @@ const GestionUsuarios = () => {
         }
 
         try {
+            // Obtener id_empresa del usuario logueado
+            const idEmpresa = session?.user?.id_empresa;
+            if (!idEmpresa) {
+                alert('No se puede crear el usuario: no hay información de la empresa');
+                return;
+            }
+
             // Generar ID automático
             const generarId = (tipo) => {
                 const timestamp = Date.now();
@@ -134,7 +124,8 @@ const GestionUsuarios = () => {
                 email: formData.email,
                 tipo: formData.tipo,
                 contraseña: formData.contraseña,
-                activo: true,
+                estado: 'activo',
+                id_empresa: idEmpresa,
                 fechaRegistro: new Date().toISOString().split('T')[0],
                 ultimaSesion: null
             };
@@ -145,14 +136,14 @@ const GestionUsuarios = () => {
             // Actualizar estado local
             setUsuarios([...usuarios, response]);
             setShowModal(false);
+            setSuccessOperationType('creado');
+            setShowSuccessModal(true);
             setFormData({
                 nombre: '',
                 email: '',
                 tipo: 'estudiante',
                 contraseña: ''
             });
-            
-            alert('Usuario creado exitosamente');
         } catch (error) {
             console.error('Error al crear usuario:', error);
             if (error.response?.status === 400 && error.response?.data?.error?.includes('email')) {
@@ -163,10 +154,26 @@ const GestionUsuarios = () => {
         }
     };
 
-    const handleToggleEstado = (id) => {
-        setUsuarios(usuarios.map(usuario => 
-            usuario.id === id ? { ...usuario, activo: !usuario.activo } : usuario
-        ));
+    const handleToggleEstado = async (id) => {
+        try {
+            const usuario = usuarios.find(u => u.id === id);
+            if (!usuario) return;
+
+            const nuevoEstado = usuario.estado === 'activo' ? 'inactivo' : 'activo';
+            
+            // Llamar al backend para actualizar el estado
+            const response = await usuariosService.updateEstado(id, nuevoEstado);
+            
+            // Actualizar estado local
+            setUsuarios(usuarios.map(u => 
+                u.id === id ? { ...u, estado: nuevoEstado } : u
+            ));
+            
+            console.log('Estado actualizado:', response);
+        } catch (error) {
+            console.error('Error al actualizar estado:', error);
+            alert('Error al actualizar el estado del usuario');
+        }
     };
 
     const handleEditUsuario = (usuario) => {
@@ -222,6 +229,8 @@ const GestionUsuarios = () => {
             ));
             
             setShowModal(false);
+            setSuccessOperationType('actualizado');
+            setShowSuccessModal(true);
             setEditMode(false);
             setEditUserId(null);
             setFormData({
@@ -230,8 +239,6 @@ const GestionUsuarios = () => {
                 tipo: 'estudiante',
                 contraseña: ''
             });
-            
-            alert('Usuario actualizado exitosamente');
         } catch (error) {
             console.error('Error al actualizar usuario:', error);
             if (error.response?.status === 400 && error.response?.data?.error?.includes('email')) {
@@ -242,19 +249,41 @@ const GestionUsuarios = () => {
         }
     };
 
-    const handleDeleteUsuario = async (id) => {
-        if (confirm('¿Está seguro de que desea eliminar este usuario? Esta acción no se puede deshacer.')) {
-            try {
-                await usuariosService.delete(id);
-                // Actualizar estado local
-                setUsuarios(usuarios.filter(usuario => usuario.id !== id));
-                console.log('Usuario eliminado:', id);
-                alert('Usuario eliminado exitosamente');
-            } catch (error) {
-                console.error('Error al eliminar usuario:', error);
-                alert('Error al eliminar el usuario');
-            }
+    const handleDeleteUsuario = (id) => {
+        setUsuarioToDelete(id);
+        setShowDeleteConfirmModal(true);
+    };
+
+    const confirmDeleteUsuario = async () => {
+        try {
+            await usuariosService.delete(usuarioToDelete);
+            // Actualizar estado local
+            setUsuarios(usuarios.filter(usuario => usuario.id !== usuarioToDelete));
+            console.log('Usuario eliminado:', usuarioToDelete);
+            
+            // Cerrar modal de confirmación y mostrar modal de éxito
+            setShowDeleteConfirmModal(false);
+            setSuccessOperationType('eliminado');
+            setShowSuccessModal(true);
+            
+            // Resetear el usuario a eliminar
+            setUsuarioToDelete(null);
+        } catch (error) {
+            console.error('Error al eliminar usuario:', error);
+            alert('Error al eliminar el usuario');
+            setShowDeleteConfirmModal(false);
+            setUsuarioToDelete(null);
         }
+    };
+
+    const cancelDeleteUsuario = () => {
+        setShowDeleteConfirmModal(false);
+        setUsuarioToDelete(null);
+    };
+
+    const closeSuccessModal = () => {
+        setShowSuccessModal(false);
+        setSuccessOperationType('');
     };
 
     const handleInputChange = (e) => {
@@ -295,6 +324,15 @@ const GestionUsuarios = () => {
             case 'administrador': return <FiUsers className="w-4 h-4" />;
             case 'superadmin': return <FiTool className="w-4 h-4" />;
             default: return <FiUser className="w-4 h-4" />;
+        }
+    };
+
+    const getEstadoColor = (estado) => {
+        switch(estado) {
+            case 'activo': return 'bg-green-100 text-green-800';
+            case 'inactivo': return 'bg-red-100 text-red-800';
+            case 'suspendido': return 'bg-yellow-100 text-yellow-800';
+            default: return 'bg-gray-100 text-gray-800';
         }
     };
 
@@ -344,7 +382,7 @@ const GestionUsuarios = () => {
                             name="busqueda"
                             value={filtros.busqueda}
                             onChange={handleFiltroChange}
-                            placeholder="Buscar por nombre o email..."
+                            placeholder="Buscar "
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
@@ -377,6 +415,9 @@ const GestionUsuarios = () => {
                                     Tipo
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Estado
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
@@ -384,7 +425,7 @@ const GestionUsuarios = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="7" className="px-6 py-4 text-center">
+                                    <td colSpan="5" className="px-6 py-4 text-center">
                                         <div className="flex items-center justify-center">
                                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
                                             <span>Cargando...</span>
@@ -413,6 +454,23 @@ const GestionUsuarios = () => {
                                             }`}>
                                                 {usuario.tipo}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <label className="flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={usuario.estado === 'activo'}
+                                                    onChange={() => handleToggleEstado(usuario.id)}
+                                                    className="sr-only"
+                                                />
+                                                <div className="relative">
+                                                    <div className={`block w-14 h-8 rounded-full ${usuario.estado === 'activo' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                    <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${usuario.estado === 'activo' ? 'translate-x-6' : ''}`}></div>
+                                                </div>
+                                                <span className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${getEstadoColor(usuario.estado)}`}>
+                                                    {usuario.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                                </span>
+                                            </label>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <div className="flex space-x-2">
@@ -532,6 +590,69 @@ const GestionUsuarios = () => {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Confirmación de Eliminación */}
+            {showDeleteConfirmModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                            <FiTrash2 className="w-6 h-6 text-red-600" />
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            ¿Eliminar Usuario?
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-6 text-center">
+                            ¿Está seguro de que desea eliminar este usuario? Esta acción no se puede deshacer.
+                        </p>
+                        
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={cancelDeleteUsuario}
+                                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDeleteUsuario}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Éxito */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            ¡Usuario {successOperationType === 'creado' ? 'Creado' : successOperationType === 'actualizado' ? 'Actualizado' : 'Eliminado'}!
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-6 text-center">
+                            El usuario ha sido {successOperationType === 'creado' ? 'creado' : successOperationType === 'actualizado' ? 'actualizado' : 'eliminado'} exitosamente del sistema.
+                        </p>
+                        
+                        <button
+                            onClick={closeSuccessModal}
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            )}
+
             </div>
         </DashboardLayout>
     );

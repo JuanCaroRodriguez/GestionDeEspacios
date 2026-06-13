@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import espaciosService from '@api/services/espacios.service';
 import bloquesService from '@api/services/bloques.service';
+import reservasService from '@api/services/reservas.service';
 import useSession from '../context/Auth/useSession';
 import { toast } from 'sonner';
-import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo } from 'react-icons/fi';
 
 const ConsultaDisponibilidad = () => {
     const { session } = useSession();
@@ -18,27 +19,39 @@ const ConsultaDisponibilidad = () => {
     const [currentWeek, setCurrentWeek] = useState(new Date());
     const [showUnavailableModal, setShowUnavailableModal] = useState(false);
     const [unavailableSpace, setUnavailableSpace] = useState(null);
+    const [reservas, setReservas] = useState([]);
+    const [loadingReservas, setLoadingReservas] = useState(false);
+    const [reservasError, setReservasError] = useState(null);
+    
+    // Estados para selección de reservas
+    const [selectedSlots, setSelectedSlots] = useState([]);
+    const [showReservaModal, setShowReservaModal] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false); // Estado alternativo
+    const [forceRender, setForceRender] = useState(0); // Forzar re-render
+    const modalRef = useRef(null); // Referencia directa al modal
+    const [reservaMotivo, setReservaMotivo] = useState('');
+    const [loadingReserva, setLoadingReserva] = useState(false);
 
     // Franjas horarias
     const timeSlots = [
-        '7:00 - 7:50',
-        '7:50 - 8:40', 
-        '8:40 - 9:30',
-        '9:30 - 10:20',
-        '10:20 - 11:10',
-        '11:10 - 12:00',
-        '12:00 - 12:50',
-        '1:00 - 1:50',
-        '1:50 - 2:40',
-        '2:40 - 3:30',
-        '3:30 - 4:20',
-        '4:20 - 5:10',
-        '5:10 - 6:00',
-        '6:00 - 6:50',
-        '6:50 - 7:40',
-        '7:40 - 8:30',
-        '8:30 - 9:20',
-        '9:20 - 10:00'
+        '07:00AM - 07:50AM',
+        '07:50AM - 08:40AM', 
+        '08:40AM - 09:30AM',
+        '09:30AM - 10:20AM',
+        '10:20AM - 11:10AM',
+        '11:10AM - 12:00PM',
+        '12:00PM - 12:50PM',
+        '01:00PM - 01:50PM',
+        '01:50PM - 02:40PM',
+        '02:40PM - 03:30PM',
+        '03:30PM - 04:20PM',
+        '04:20PM - 05:10PM',
+        '05:10PM - 06:00PM',
+        '06:00PM - 06:50PM',
+        '06:50PM - 07:40PM',
+        '07:40PM - 08:30PM',
+        '08:30PM - 09:20PM',
+        '09:20PM - 10:00PM'
     ];
 
     const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -48,28 +61,32 @@ const ConsultaDisponibilidad = () => {
         const d = new Date(weekStart);
         const day = d.getDay();
         const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para que lunes sea 1
-        const monday = new Date(d.setDate(diff));
+        const monday = new Date(d.getFullYear(), d.getMonth(), diff);
         const weekDates = [];
         for (let i = 0; i < 6; i++) {
-            const date = new Date(monday);
-            date.setDate(monday.getDate() + i);
+            const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
             weekDates.push(date);
         }
         return weekDates;
     };
 
-    const weekDates = getWeekDates(currentWeek);
+    const weekDates = getWeekDates(currentWeek);    
+    
 
     const prevWeek = () => {
         const prev = new Date(currentWeek);
         prev.setDate(prev.getDate() - 7);
         setCurrentWeek(prev);
+        // Limpiar selección al cambiar de semana
+        clearSelection();
     };
 
     const nextWeek = () => {
         const next = new Date(currentWeek);
         next.setDate(next.getDate() + 7);
         setCurrentWeek(next);
+        // Limpiar selección al cambiar de semana
+        clearSelection();
     };
 
     const isCurrentWeek = () => {
@@ -91,6 +108,508 @@ const ConsultaDisponibilidad = () => {
         return `${start.getDate()} ${start.toLocaleString('default', { month: 'short' })} - ${end.getDate()} ${end.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
     };
 
+    // Función para cargar reservas de un espacio
+    const cargarReservasEspacio = async (espacioId) => {
+        
+        
+        
+        if (!espacioId) {
+            
+            return;
+        }
+        
+        if (!session || !session.user) {
+            
+            setReservas([]);
+            return;
+        }
+        
+        const idEmpresa = session.user.id_empresa;
+        if (!idEmpresa) {
+            
+            setReservas([]);
+            return;
+        }
+        
+        setLoadingReservas(true);
+        setReservasError(null);
+        
+        try {
+            
+            const todasReservasData = await reservasService.getAllByEmpresa(idEmpresa);
+            
+            
+            // Las reservas pueden venir directamente o en .data
+            const todasReservasArray = todasReservasData.data || todasReservasData || [];
+            
+            
+            // Filtrar por espacio
+            const reservasEspacio = todasReservasArray.filter(reserva => reserva.espacioId === espacioId);
+            
+            
+            setReservas(reservasEspacio);
+        } catch (error) {
+            console.error('❌ Error al cargar reservas:', error);
+            setReservasError('No se pudieron cargar las reservas existentes');
+            toast.error('Error al cargar las reservas');
+        } finally {
+            setLoadingReservas(false);
+        }
+    };
+
+    // Función para verificar si un horario está ocupado
+    const estaOcupado = (day, slot) => {
+        if (!selectedSpace || reservas.length === 0) {
+            
+            return false;
+        }
+
+        const { horaInicio, horaFin } = reservasService.timeSlotToHoras(slot);
+        const fecha = weekDates[days.indexOf(day)];
+        // Buscar si alguna reserva afecta este horario
+        const resultado = reservas.some(reserva => {
+            const afecta = reservasService.reservaAfectaHorario(reserva, fecha, day, horaInicio, horaFin, session?.user?.id_empresa);
+            
+                
+            return afecta;
+        });
+        
+        
+        return resultado;
+    };
+
+    // Función para manejar clic en franja disponible
+    const handleSlotClick = (day, slot) => {
+        if (!selectedSpace || estaOcupado(day, slot)) return;
+
+        const slotKey = `${day}-${slot}`;
+        const slotIndex = timeSlots.indexOf(slot);
+        
+        setSelectedSlots(prevSlots => {
+            let newSlots;
+            
+            // Si ya está seleccionado, deseleccionarlo
+            if (prevSlots.some(s => s.key === slotKey)) {
+                newSlots = prevSlots.filter(s => s.key !== slotKey);
+            } else {
+                // Si no hay selección, añadir esta franja
+                if (prevSlots.length === 0) {
+                    newSlots = [{ key: slotKey, day, slot, index: slotIndex }];
+                } else {
+                    // Verificar si es consecutiva con alguna franja existente
+                    const isConsecutive = prevSlots.some(existingSlot => {
+                        const dayDiff = days.indexOf(day) - days.indexOf(existingSlot.day);
+                        const indexDiff = Math.abs(slotIndex - existingSlot.index);
+                        
+                        // Misma día y franja consecutiva O día consecutivo y misma franja
+                        return (dayDiff === 0 && indexDiff === 1) || 
+                               (indexDiff === 0 && Math.abs(dayDiff) === 1);
+                    });
+                    
+                    if (isConsecutive) {
+                        newSlots = [...prevSlots, { key: slotKey, day, slot, index: slotIndex }];
+                    } else {
+                        // Si no es consecutiva, reemplazar la selección
+                        newSlots = [{ key: slotKey, day, slot, index: slotIndex }];
+                    }
+                }
+            }
+            
+            // SIEMPRE ordenar las franjas seleccionadas cronológicamente
+            // Primero por día, luego por hora
+            const sortedSlots = newSlots.sort((a, b) => {
+                const dayA = days.indexOf(a.day);
+                const dayB = days.indexOf(b.day);
+                
+                if (dayA !== dayB) {
+                    return dayA - dayB; // Ordenar por día (Lunes=0, Martes=1, etc.)
+                }
+                
+                return a.index - b.index; // Ordenar por hora dentro del mismo día
+            });
+            
+            
+            return sortedSlots;
+        });
+    };
+
+    // Función para verificar si una franja está seleccionada
+    const isSlotSelected = (day, slot) => {
+        const slotKey = `${day}-${slot}`;
+        return selectedSlots.some(s => s.key === slotKey);
+    };
+
+    // Función para limpiar selección
+    const clearSelection = () => {
+        setSelectedSlots([]);
+        setReservaMotivo('');
+    };
+
+    // Función directa para mostrar modal (bypass de estado)
+    const mostrarModalDirecto = () => {
+        
+        
+        // Limpiar estados basura de intentos anteriores
+        setReservaMotivo('');
+        
+        // Guardar las selecciones actuales para evitar que se pierdan
+        const currentSelections = {
+            selectedSlots: [...selectedSlots],
+            selectedSpace: { ...selectedSpace },
+            session: { ...session }
+        };
+        
+        
+        
+        
+        // Crear modal directamente en el DOM
+        const modalExistente = document.getElementById('modal-directo');
+        if (modalExistente) {
+            modalExistente.remove();
+        }
+        
+        // Determinar el tipo de reserva según rol y espacio (ANTES de crear el HTML)
+        const userRole = session?.user?.tipo || '';
+        const espacioTipo = currentSelections.selectedSpace?.tipo || '';
+        
+        
+        
+        
+        
+        
+        let mostrarTipoSelector = false;
+        let tipoPorDefecto = 'ocasional';
+        let estadoPorDefecto = 'Reservada';
+        
+        if (userRole === 'superadmin') {
+            
+            mostrarTipoSelector = true;
+            tipoPorDefecto = 'ocasional';
+        } else if (userRole === 'administrador' && espacioTipo === 'Laboratorio') {
+            
+            mostrarTipoSelector = true;
+            tipoPorDefecto = 'ocasional';
+        } else if (userRole === 'estudiante' || userRole === 'docente') {
+            
+            if (espacioTipo !== 'Aula') {
+                tipoPorDefecto = 'ocasional';
+                estadoPorDefecto = 'Pendiente';
+            }
+        } else {
+            
+        }
+        
+        
+        
+        // Guardar estas variables en el window para usarlas en confirmación
+        window.modalConfig = {
+            mostrarTipoSelector,
+            tipoPorDefecto,
+            estadoPorDefecto
+        };
+        
+        // Guardar currentSelections para acceso global
+        window.currentSelections = currentSelections;
+        
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'modal-directo';
+        modalDiv.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        `;
+        
+        modalDiv.innerHTML = `
+            <div style="
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 400px;
+                width: 90%;
+                max-height: 80vh;
+                overflow: auto;
+            ">
+                <h3 style="margin: 0 0 15px 0; font-size: 18px;">Confirmar Reserva</h3>
+                <div style="margin-bottom: 15px;">
+                    <strong>Espacio:</strong> ${currentSelections.selectedSpace?.nombre}<br/>
+                    <strong>Franjas:</strong><br/>
+                    ${currentSelections.selectedSlots.map(slot => `• ${slot.day} - ${slot.slot}`).join('<br/>')}
+                </div>
+                ${mostrarTipoSelector ? `
+                <div style="margin-bottom: 15px;">
+                    <label><strong>Tipo de Reserva:</strong></label><br/>
+                    <select id="tipo-directo" style="
+                        width: 100%;
+                        padding: 8px;
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        margin-top: 5px;
+                    ">
+                        <option value="ocasional">Ocasional</option>
+                        <option value="permanente">Permanente</option>
+                    </select>
+                </div>` : ''}
+                <div style="margin-bottom: 15px;">
+                    <label><strong>Motivo:</strong></label><br/>
+                    <textarea id="motivo-directo" style="
+                        width: 100%;
+                        height: 80px;
+                        padding: 8px;
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        resize: vertical;
+                    " placeholder="Escribe el motivo..."></textarea>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="cerrarModalDirecto()" style="
+                        flex: 1;
+                        padding: 10px;
+                        background-color: #6c757d;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    ">Cancelar</button>
+                    <button onclick="confirmarModalDirecto()" style="
+                        flex: 1;
+                        padding: 10px;
+                        background-color: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    ">Confirmar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalDiv);
+        
+        // Limpiar el textarea al abrir el modal
+        setTimeout(() => {
+            const textarea = document.getElementById('motivo-directo');
+            if (textarea) {
+                textarea.value = '';
+                
+            }
+        }, 50);
+        
+        // Funciones globales para los botones
+        window.cerrarModalDirecto = () => {
+            
+            const modal = document.getElementById('modal-directo');
+            if (modal) modal.remove();
+        };
+        
+        window.confirmarModalDirecto = async () => {
+            
+            
+            // Obtener el valor del motivo
+            const motivoElement = document.getElementById('motivo-directo');
+            const motivo = motivoElement ? motivoElement.value : '';
+            
+            // Obtener el tipo de reserva seleccionado
+            const config = window.modalConfig || {};
+            let tipoReserva = config.tipoPorDefecto || 'ocasional';
+            
+            if (config.mostrarTipoSelector) {
+                const tipoElement = document.getElementById('tipo-directo');
+                if (tipoElement) {
+                    tipoReserva = tipoElement.value;
+                }
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            // PRIMERO validar que tengamos las selecciones guardadas
+            const currentSelections = window.currentSelections || {};
+            if (!currentSelections.selectedSlots || currentSelections.selectedSlots.length === 0 || !currentSelections.selectedSpace) {
+                alert('Error: No hay franjas seleccionadas o espacio seleccionado. Por favor, selecciona nuevamente.');
+                window.cerrarModalDirecto();
+                return;
+            }
+            
+            // Validación SIMPLE del motivo
+            if (!motivo || motivo.trim() === '') {
+                alert('Por favor, ingresa un motivo');
+                return; // NO cerrar el modal
+            }
+            
+            try {
+                
+                // Pasar el motivo, tipo y estado directamente para evitar problemas de timing
+                await handleReserva(motivo.trim(), tipoReserva, config.estadoPorDefecto);
+                
+                window.cerrarModalDirecto();
+            } catch (error) {
+                console.error('❌ ERROR EN RESERVA:', error);
+                alert('Error al crear la reserva: ' + error.message);
+                // No cerrar el modal si hay error para que pueda reintentar
+            }
+        };
+        
+        
+    };
+
+    // Función para crear reserva
+    const handleReserva = async (motivoDirecto = null, tipoDirecto = null, estadoDirecto = null) => {
+        
+        
+        // Usar los valores directos si se proporcionan, si no usar los estados
+        const motivoFinal = motivoDirecto || reservaMotivo;
+        const tipoFinal = tipoDirecto || 'ocasional';
+        const estadoFinal = estadoDirecto || 'Reservada';
+        
+        if (!motivoFinal.trim()) {
+            
+            alert('Error: Debes ingresar un motivo');
+            return;
+        }
+        
+        if (selectedSlots.length === 0) {
+            
+            alert('Error: Debes seleccionar al menos una franja horaria');
+            return;
+        }
+        
+        if (!selectedSpace) {
+            
+            alert('Error: No hay espacio seleccionado');
+            return;
+        }
+
+        
+        setLoadingReserva(true);
+        
+        try {
+            // Las franjas ya están ordenadas cronológicamente por handleSlotClick
+            // Pero hacemos una doble seguridad por si acaso
+            const sortedSlots = [...selectedSlots].sort((a, b) => {
+                const dayA = days.indexOf(a.day);
+                const dayB = days.indexOf(b.day);
+                if (dayA !== dayB) return dayA - dayB;
+                return a.index - b.index;
+            });
+
+            
+
+            // Obtener primera y última franja para calcular horario
+            const firstSlot = sortedSlots[0]; // Más temprano
+            const lastSlot = sortedSlots[sortedSlots.length - 1]; // Más tardío
+            // Usar la fecha del primer día seleccionado
+            const fecha = weekDates[days.indexOf(firstSlot.day)];
+            // Para múltiples franjas, necesitamos la hora de inicio de la primera
+            // y la hora de fin de la última (la hora de fin REAL, no la hora de inicio)
+            const { horaInicio: horaInicioFirst } = reservasService.timeSlotToHoras(firstSlot.slot);
+            const { horaFin: horaFinLast } = reservasService.timeSlotToHoras(lastSlot.slot);
+            
+            // Función para convertir hora 12h a 24h
+            const convertirA24h = (hora12h) => {
+                const [hora, periodo] = hora12h.split(/(AM|PM)/);
+                let [h, m] = hora.trim().split(':').map(Number);
+                
+                if (periodo.trim() === 'PM' && h !== 12) {
+                    h += 12;
+                } else if (periodo.trim() === 'AM' && h === 12) {
+                    h = 0;
+                }
+                
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            };           
+
+            // Determinar las horas finales según el caso
+            let horaInicioFinal, horaFinFinal;
+            
+            if (sortedSlots.length === 1) {
+                // UNA SOLA FRANJA: usar horaInicio y horaFin de la misma franja
+                
+                const timeSlotData = reservasService.timeSlotToHoras(firstSlot.slot);
+                
+                
+                const { horaInicio, horaFin } = timeSlotData;
+                
+                horaInicioFinal = horaInicio.trim()
+                horaFinFinal = horaFin.trim()
+                
+                
+            } else {
+                // MÚLTIPLES FRANJAS: usar horaInicio de la primera y horaFin de la última
+                horaInicioFinal = horaInicioFirst.trim()
+                horaFinFinal = horaFinLast.trim()
+            }            
+            
+            // Crear datos de reserva
+            const reservaData = {
+                id: `reserva-${Date.now()}`,
+                personaId: session?.user?.id,
+                espacioId: selectedSpace.id,
+                fecha: fecha.toISOString().split('T')[0],
+                horaInicio: horaInicioFinal,
+                horaFin: horaFinFinal,
+                motivo: motivoFinal.trim(),
+                tipo: tipoFinal,
+                estado: estadoFinal,
+                id_empresa: session?.user?.id_empresa
+            };
+            
+            
+            
+            await reservasService.create(reservaData);
+            // Recargar reservas del espacio
+            await cargarReservasEspacio(selectedSpace.id);
+            
+            // Actualizar el estado del motivo y limpiar selección
+            setReservaMotivo(motivoFinal);
+            clearSelection();
+            
+            
+            toast.success('Reserva creada exitosamente');
+        } catch (error) {
+            console.error('Error al crear reserva:', error);
+            console.error('Respuesta del backend:', error.response?.data);
+            console.error('Status:', error.response?.status);
+            console.error('Headers:', error.response?.headers);
+            
+            if (error.response?.status === 400) {
+                alert(`Error 400 - Bad Request: ${JSON.stringify(error.response?.data, null, 2)}`);
+            }
+            
+            toast.error('No se pudo crear la reserva');
+        } finally {
+            setLoadingReserva(false);
+        }
+    };
+
+    // Función para obtener información de reserva en un horario
+    const getReservaInfo = (day, slot) => {
+        if (!selectedSpace || reservas.length === 0) return null;
+
+        const { horaInicio, horaFin } = reservasService.timeSlotToHoras(slot);
+        const fecha = weekDates[days.indexOf(day)];
+        
+        // Buscar la reserva que afecta este horario
+        return reservas.find(reserva => 
+            reservasService.reservaAfectaHorario(reserva, fecha, day, horaInicio, horaFin, session?.user?.id_empresa)
+        );
+    };
+
     // Función helper para obtener el nombre del bloque por ID
     const getNombreBloque = (bloqueId) => {
         const bloque = bloques.find(b => b.id === bloqueId);
@@ -106,8 +625,9 @@ const ConsultaDisponibilidad = () => {
                 
                 // Obtener id_empresa del usuario logueado
                 const idEmpresa = session?.user?.id_empresa;
+                
                 if (!idEmpresa) {
-                    setError('No se encontró la empresa del usuario');
+                    setError('No tienes una empresa asignada');
                     return;
                 }
                 
@@ -119,8 +639,8 @@ const ConsultaDisponibilidad = () => {
                 
                 setEspacios(espaciosData);
                 setBloques(bloquesData);
-                console.log('Espacios cargados:', espaciosData);
-                console.log('Bloques cargados:', bloquesData);
+                
+                
             } catch (err) {
                 console.error('Error al cargar datos:', err);
                 setError('No se pudieron cargar los datos. Por favor, intente nuevamente.');
@@ -155,10 +675,10 @@ const ConsultaDisponibilidad = () => {
                         </h2>
                         <button
                             onClick={() => setSelectedBlock(null)}
-                            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm"
+                            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm flex"
                         >
                             <FiArrowLeft className="w-4 h-4 mr-2" />
-                            Volver a plano general
+                            Volver al plano general
                         </button>
                     </div>
 
@@ -179,15 +699,15 @@ const ConsultaDisponibilidad = () => {
                                             <div className="font-semibold text-sm text-gray-800">
                                                 {espacio.nombre}
                                             </div>
-                                            <div className="text-xs text-gray-600 mt-1">
+                                            <div className="text-xs text-gray-600 mt-1 flex items-center">
                                                 <FiTag className="w-3 h-3 mr-1" />
                                                 {espacio.tipo}
                                             </div>
-                                            <div className="text-xs text-gray-600">
+                                            <div className="text-xs text-gray-600 flex items-center">
                                                 <FiMapPin className="w-3 h-3 mr-1" />
                                                 Salón {espacio.salon}
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className="text-xs text-gray-500 flex items-center">
                                                 <FiUsers className="w-3 h-3 mr-1" />
                                                 Capacidad: {espacio.capacidad}
                                             </div>
@@ -338,12 +858,7 @@ const ConsultaDisponibilidad = () => {
                                                     </svg>
                     </div>
 
-                    <div className="mt-6 flex flex-wrap gap-4 text-sm">
-                        <div className="flex items-center">
-                            <div className="w-6 h-6 bg-blue-100 border-2 border-blue-400 rounded mr-2"></div>
-                            <span className="text-gray-700">Bloque (clic para ver salones)</span>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         );
@@ -352,15 +867,33 @@ const ConsultaDisponibilidad = () => {
 
     // Seleccionar espacio para ver horario
     const selectSpace = (space) => {
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         // Verificar si el espacio está disponible
         if (!space.disponible) {
+            
             setUnavailableSpace(space);
             setShowUnavailableModal(true);
             return;
         }
         
+        
         setSelectedSpace(space);
         setShowSchedule(true);
+        
+        // Limpiar selección al cambiar de espacio
+        clearSelection();
+        
+        // Cargar reservas del espacio
+        cargarReservasEspacio(space.id);
     };
 
     // Volver a la lista de espacios
@@ -375,20 +908,23 @@ const ConsultaDisponibilidad = () => {
             <DashboardLayout title="Horario del Espacio">
                 <div className="p-6">
                     <div className="mb-6">
-                        <button
-                            onClick={backToSpaces}
-                            className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                        >
-                            <FiArrowLeft className="w-4 h-4 mr-2" />
-                            Volver a espacios
-                        </button>
                         <h1 className="text-2xl font-bold text-gray-900 flex items-center justify-center">
                             <FiCalendar className="w-5 h-5 mr-2" /> Horario - {selectedSpace.nombre}
                         </h1>
-                        <p className="text-gray-600 mt-2">
-                            {getNombreBloque(selectedSpace.bloque)} - Salón {selectedSpace.salon} | Capacidad: {selectedSpace.capacidad} personas
-                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                            <p className="text-gray-600">
+                                {getNombreBloque(selectedSpace.bloque)} - Salón {selectedSpace.salon} | Capacidad: {selectedSpace.capacidad} personas
+                            </p>
+                            <button
+                                onClick={backToSpaces}
+                                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex"
+                            >
+                                <FiArrowLeft className="w-4 h-4 mr-2" />
+                                Volver a espacios
+                            </button>
+                        </div>
                     </div>
+                    
 
                     {/* Navegación de semanas */}
                     <div className="bg-white rounded-lg shadow p-4 mb-4">
@@ -420,6 +956,39 @@ const ConsultaDisponibilidad = () => {
                     </div>
 
                     {/* Grid de horario */}
+                    {/* Botón de reservar */}
+                    {selectedSlots.length > 0 && (
+                        <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="text-sm font-medium text-blue-800">
+                                        Franjas seleccionadas: {selectedSlots.length}
+                                    </h4>
+                                    <div className="text-xs text-blue-600 mt-1">
+                                        {selectedSlots.map(s => `${s.day} ${s.slot}`).join(', ')}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={clearSelection}
+                                        className="px-4 py-2 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors"
+                                    >
+                                        Limpiar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            
+                                            mostrarModalDirecto();
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                                    >
+                                        Reservar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-lg shadow overflow-auto">
                         <table className="min-w-full">
                             <thead className="bg-gray-50">
@@ -443,13 +1012,48 @@ const ConsultaDisponibilidad = () => {
                                         <td className="px-4 py-3 text-sm font-medium text-gray-900 border">
                                             {slot}
                                         </td>
-                                        {days.map((day, dayIndex) => (
-                                            <td key={`${dayIndex}-${slotIndex}`} className="px-2 py-2 text-center border">
-                                                <div className="w-full h-8 bg-green-100 rounded hover:bg-green-200 cursor-pointer transition-colors flex items-center justify-center">
-                                                    <span className="text-xs text-green-800">Disponible</span>
-                                                </div>
-                                            </td>
-                                        ))}
+                                        {days.map((day, dayIndex) => {
+                                            const ocupado = estaOcupado(day, slot);
+                                            const reservaInfo = getReservaInfo(day, slot);
+                                            const seleccionado = isSlotSelected(day, slot);
+                                            
+                                            return (
+                                                <td key={`${dayIndex}-${slotIndex}`} className="px-2 py-2 text-center border">
+                                                    {ocupado ? (
+                                                        <div className="relative group">
+                                                            <div className="w-full h-8 bg-red-100 rounded hover:bg-red-200 cursor-pointer transition-colors flex items-center justify-center">
+                                                                <span className="text-xs text-red-800 font-medium">Ocupado</span>
+                                                            </div>
+                                                            
+                                                            {/* Tooltip con información de la reserva */}
+                                                            {reservaInfo && (
+                                                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10">
+                                                                    <div className="font-medium">{reservaInfo.motivo || 'Sin motivo'}</div>
+                                                                    <div className="text-gray-300">
+                                                                        {reservaInfo.tipo === 'permanente' ? 'Permanente' : 'Ocasional'}
+                                                                    </div>  
+                                                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : seleccionado ? (
+                                                        <div 
+                                                            onClick={() => handleSlotClick(day, slot)}
+                                                            className="w-full h-8 bg-blue-500 rounded hover:bg-blue-600 cursor-pointer transition-colors flex items-center justify-center"
+                                                        >
+                                                            <span className="text-xs text-white font-medium">Seleccionado</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div 
+                                                            onClick={() => handleSlotClick(day, slot)}
+                                                            className="w-full h-8 bg-green-100 rounded hover:bg-green-200 cursor-pointer transition-colors flex items-center justify-center"
+                                                        >
+                                                            <span className="text-xs text-green-800">Disponible</span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
                                     </tr>
                                 ))}
                             </tbody>
@@ -457,17 +1061,24 @@ const ConsultaDisponibilidad = () => {
                     </div>
 
                     <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <h3 className="text-sm font-medium text-blue-800 mb-2">Leyenda:</h3>
-                        <div className="flex flex-wrap gap-4 text-sm">
-                            <div className="flex items-center">
-                                <div className="w-4 h-4 bg-green-100 rounded mr-2"></div>
-                                <span className="text-gray-700">Disponible</span>
+                        
+                        
+                                                
+                        {/* Indicador de carga de reservas */}
+                        {loadingReservas && (
+                            <div className="mt-3 flex items-center text-xs text-gray-600">
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+                                Cargando reservas existentes...
                             </div>
-                            <div className="flex items-center">
-                                <div className="w-4 h-4 bg-red-100 rounded mr-2"></div>
-                                <span className="text-gray-700">Ocupado</span>
+                        )}
+                        
+                        {/* Error de carga */}
+                        {reservasError && (
+                            <div className="mt-3 flex items-center text-xs text-red-600">
+                                <FiInfo className="mr-1" />
+                                {reservasError}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </DashboardLayout>
@@ -542,6 +1153,99 @@ const ConsultaDisponibilidad = () => {
                                 className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                             >
                                 Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de confirmación de reserva - Simple */}
+            {(() => {
+               
+                if (modalVisible || showReservaModal) {
+                }
+                return modalVisible || showReservaModal;
+            })() && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '20px',
+                        borderRadius: '8px',
+                        maxWidth: '400px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflow: 'auto'
+                    }}>
+                        <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Confirmar Reserva</h3>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <strong>Espacio:</strong> {selectedSpace?.nombre}<br/>
+                            <strong>Franjas:</strong><br/>
+                            {selectedSlots.map((slot, i) => (
+                                <div key={i}>• {slot.day} - {slot.slot}</div>
+                            ))}
+                        </div>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <label><strong>Motivo:</strong></label><br/>
+                            <textarea
+                                value={reservaMotivo}
+                                onChange={(e) => setReservaMotivo(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    height: '80px',
+                                    padding: '8px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px',
+                                    resize: 'vertical'
+                                }}
+                                placeholder="Escribe el motivo..."
+                            />
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                onClick={() => {
+                                    setModalVisible(false);
+                                    setShowReservaModal(false);
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px',
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleReserva}
+                                disabled={!reservaMotivo.trim() || loadingReserva}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px',
+                                    backgroundColor: (!reservaMotivo.trim() || loadingReserva) ? '#ccc' : '#007bff',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: (!reservaMotivo.trim() || loadingReserva) ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {loadingReserva ? 'Creando...' : 'Confirmar'}
                             </button>
                         </div>
                     </div>

@@ -26,7 +26,9 @@ export const administradoresService = {
   // Obtener administrador por email
   getByEmail: async (email) => {
     try {
-      const response = await axiosInstance.get(`/administrador/email/${email}`);
+      const response = await axiosInstance.get(
+        `/superadmin/administradores/email/${email}`,
+      );
       return response.data;
     } catch (error) {
       console.error("Error al obtener administrador por email:", error);
@@ -34,11 +36,11 @@ export const administradoresService = {
     }
   },
 
-  // Crear nuevo administrador (solo SuperAdmin)
+  // Crear nuevo administrador
   create: async (administradorData) => {
     try {
       const response = await axiosInstance.post(
-        "/superadmin/administradores",
+        "/administrador",
         administradorData,
       );
       return response.data;

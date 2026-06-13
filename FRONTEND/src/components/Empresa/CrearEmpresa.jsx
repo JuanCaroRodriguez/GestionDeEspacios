@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import empresasService from '../../api/services/empresas.service';
 import bloquesService from '../../api/services/bloques.service';
+import { FiInfo } from "react-icons/fi";
+import SweetAlert2 from 'react-sweetalert2';   
 
 const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
     const [paso, setPaso] = useState(1); // 1: Datos empresa, 2: Crear bloques
@@ -15,6 +17,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
     const [pisosForms, setPisosForms] = useState({}); // Objeto con el formulario de pisos por bloque
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [swalProps, setSwalProps] = useState({});
+    const [alertKey, setAlertKey] = useState(0); // Key para forzar el re-render
 
     const handleChangeEmpresa = (e) => {
         const { name, value } = e.target;
@@ -123,20 +127,21 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
         if (bloqueIndex === -1) return;
 
         const bloqueActualizado = { ...bloques[bloqueIndex] };
-        const pisoFormActual = pisosForms[bloqueId] || { numero: '', cantidadSalones: '' };
+        const pisoFormActual = pisosForms[bloqueId] || { numero: '', cantidadSalones: '', capacidadSalones: 30 };
         
         // Validar que los campos no estén vacíos
-        if (!pisoFormActual.numero || !pisoFormActual.cantidadSalones) {
-            setError('Debes ingresar el número de piso y cantidad de salones');
+        if (!pisoFormActual.numero || !pisoFormActual.cantidadSalones || !pisoFormActual.capacidadSalones) {
+            setError('Debes ingresar el número de piso, cantidad de espacios y capacidad');
             return;
         }
 
         const numeroPiso = parseInt(pisoFormActual.numero);
         const cantidadSalones = parseInt(pisoFormActual.cantidadSalones);
+        const capacidadSalones = parseInt(pisoFormActual.capacidadSalones);
         
         // Validar rangos
-        if (numeroPiso < 1 || cantidadSalones < 1 || cantidadSalones > 20) {
-            setError('El piso debe ser ≥1 y los salones entre 1 y 20');
+        if (numeroPiso < 1 || cantidadSalones < 1 || cantidadSalones > 20 || capacidadSalones < 1 || capacidadSalones > 200) {
+            setError('El piso debe ser ≥1, salones entre 1-20 y capacidad entre 1-200');
             return;
         }
         
@@ -151,9 +156,12 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
         const nuevoPiso = {
             numero: numeroPiso,
             cantidadSalones: cantidadSalones,
+            capacidadSalones: capacidadSalones,
+            capacidadesSalones: Array.from({ length: cantidadSalones }, () => capacidadSalones),
             salones: Array.from({ length: cantidadSalones }, (_, i) => ({
                 numero: (i + 1).toString().padStart(2, '0'),
-                nombre: undefined
+                nombre: undefined,
+                capacidad: capacidadSalones
             }))
         };
 
@@ -169,7 +177,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
             ...prev,
             [bloqueId]: {
                 numero: '',
-                cantidadSalones: ''
+                cantidadSalones: '',
+                capacidadSalones: ''
             }
         }));
         setError('');
@@ -275,7 +284,24 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                 });
             }
 
-            onEmpresaCreada(empresaCreada);
+            // 4. Limpiar sesión y redirigir al login
+            localStorage.removeItem('session');
+            
+            // Mostrar mensaje de éxito con SweetAlert2
+            setSwalProps({
+                show: true,
+                title: '¡Empresa Creada Exitosamente!',
+                text: 'Tu empresa y bloques han sido configurados correctamente. Por favor, inicia sesión nuevamente para continuar.',
+                icon: 'success',
+                confirmButtonText: 'Ir al Login',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didClose: () => {
+                    // Redirigir al login cuando se cierre el modal
+                    window.location.href = '/auth';
+                }
+            });
+            setAlertKey(alertKey + 1);
         } catch (err) {
             console.error('Error al finalizar configuración:', err);
             if (err.response?.data?.error) {
@@ -399,7 +425,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
     // Renderizar paso 2: Crear bloques
     return (
-        <div className={fullscreen ? "min-h-screen bg-gray-50 flex items-center justify-center p-4" : ""}>
+        <>
+            <div className={fullscreen ? "min-h-screen bg-gray-50 flex items-center justify-center p-4" : ""}>
             <style>{`
                 /* Ocultar flechas de inputs tipo number */
                 input[type=number]::-webkit-inner-spin-button,
@@ -511,7 +538,14 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                                             Eliminar
                                                         </button>
                                                     </div>
-                                                    <span className="text-xs text-gray-500">{piso.cantidadSalones} salones</span>
+                                                    <div className="text-xs text-gray-500">
+                                                        <div>{piso.cantidadSalones} salones</div>
+                                                        {piso.capacidadSalones && (
+                                                            <div className="text-blue-600">
+                                                                {piso.capacidadSalones} personas c/u (total: {piso.cantidadSalones * piso.capacidadSalones})
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))
                                         )}
@@ -521,7 +555,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                     <div className="border-t pt-3">
                                         <div className="space-y-2">
                                             <div className="flex items-center space-x-2">
-                                                <label className="text-xs font-medium text-gray-600 w-12">#Piso:</label>
+                                                <label className="text-xs font-medium text-gray-600 w-19">#Piso:</label>
                                                 <div className="flex items-center">
                                                     <button
                                                         onClick={() => {
@@ -556,7 +590,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                             </div>
                                             
                                             <div className="flex items-center space-x-2">
-                                                <label className="text-xs font-medium text-gray-600 w-12">Espacios:</label>
+                                                <label className="text-xs font-medium text-gray-600 w-19">Total de espacios del piso:</label>
                                                 <div className="flex items-center">
                                                     <button
                                                         onClick={() => {
@@ -591,9 +625,51 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                                 </div>
                                             </div>
                                             
+                                            <div className="flex items-center space-x-2 mt-2">
+                                                <label className="text-xs font-medium text-gray-600 w-12">Capacidad:</label>
+                                                <div className="flex items-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            const currentValue = (pisosForms[bloque.id]?.capacidadSalones) || '';
+                                                            const newValue = currentValue === '' ? 1 : Math.max(1, parseInt(currentValue) - 1);
+                                                            handleChangePiso(bloque.id, { target: { name: 'capacidadSalones', value: newValue } });
+                                                        }}
+                                                        className="px-1 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-l"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        name="capacidadSalones"
+                                                        min="1"
+                                                        max="200"
+                                                        value={pisosForms[bloque.id]?.capacidadSalones || ''}
+                                                        onChange={(e) => handleChangePiso(bloque.id, e)}
+                                                        className="w-16 px-2 py-1 text-sm border-t border-b border-gray-300 text-center"
+                                                        placeholder="30"
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            const currentValue = (pisosForms[bloque.id]?.capacidadSalones) || '';
+                                                            const newValue = currentValue === '' ? 1 : Math.min(200, parseInt(currentValue) + 1);
+                                                            handleChangePiso(bloque.id, { target: { name: 'capacidadSalones', value: newValue } });
+                                                        }}
+                                                        className="px-1 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-r"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <span className="text-xs text-gray-500 ml-2">personas c/u</span>
+                                            </div>
+                                            
+                                            <div className="text-xs text-blue-600 mt-1 text-center flex">
+                                                <FiInfo  className="w-5 h-5" />
+                                                Después podrá modificar la capacidad de cada espacio individualmente
+                                            </div>
+                                            
                                             <button
                                                 onClick={() => handleAddPiso(bloque.id)}
-                                                className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                                className="w-full px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors mt-2"
                                             >
                                                 + Añadir Piso
                                             </button>
@@ -634,6 +710,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                 </div>
             </div>
         </div>
+            <SweetAlert2 key={alertKey} {...swalProps} />
+        </>
     );
 };
 

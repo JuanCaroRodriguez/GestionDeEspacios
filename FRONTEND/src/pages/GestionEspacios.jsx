@@ -23,6 +23,8 @@ const GestionEspacios = () => {
 
     const [bloques, setBloques] = useState([]);
 
+    const [selectedBloque, setSelectedBloque] = useState('');
+
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState(null);
@@ -30,6 +32,12 @@ const GestionEspacios = () => {
     const [showModal, setShowModal] = useState(false);
 
     const [showEditModal, setShowEditModal] = useState(false);
+
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [espacioToDelete, setEspacioToDelete] = useState(null);
 
     const [formData, setFormData] = useState({
 
@@ -183,6 +191,12 @@ const GestionEspacios = () => {
 
         }
 
+        // Validar que el espacio no esté duplicado
+        if (isEspacioDuplicado()) {
+            toast.error(`El espacio ${formData.salon} ya existe en el bloque ${formData.bloque} y piso ${formData.piso}`);
+            return;
+        }
+
 
 
         try {
@@ -303,28 +317,38 @@ const GestionEspacios = () => {
 
 
 
-    const handleDeleteEspacio = async (id) => {
+    const handleDeleteEspacio = (id) => {
+        setEspacioToDelete(id);
+        setShowDeleteConfirmModal(true);
+    };
 
-        toast.confirm('¿Está seguro de que desea eliminar este espacio?', {
-            action: {
-                label: 'Eliminar',
-                onClick: async () => {
-                    try {
-                        await espaciosService.delete(id);
-                        setEspacios(espacios.filter(espacio => espacio.id !== id));
-                        console.log('Espacio eliminado:', id);
-                        toast.success('Espacio eliminado exitosamente');
-                    } catch (error) {
-                        console.error('Error al eliminar espacio:', error);
-                        toast.error('Error al eliminar el espacio');
-                    }
-                },
-            },
-            cancelAction: {
-                label: 'Cancelar',
-            },
-        });
+    const confirmDeleteEspacio = async () => {
+        try {
+            await espaciosService.delete(espacioToDelete);
+            setEspacios(espacios.filter(espacio => espacio.id !== espacioToDelete));
+            console.log('Espacio eliminado:', espacioToDelete);
+            
+            // Cerrar modal de confirmación y mostrar modal de éxito
+            setShowDeleteConfirmModal(false);
+            setShowSuccessModal(true);
+            
+            // Resetear el espacio a eliminar
+            setEspacioToDelete(null);
+        } catch (error) {
+            console.error('Error al eliminar espacio:', error);
+            toast.error('Error al eliminar el espacio');
+            setShowDeleteConfirmModal(false);
+            setEspacioToDelete(null);
+        }
+    };
 
+    const cancelDeleteEspacio = () => {
+        setShowDeleteConfirmModal(false);
+        setEspacioToDelete(null);
+    };
+
+    const closeSuccessModal = () => {
+        setShowSuccessModal(false);
     };
 
 
@@ -375,6 +399,11 @@ const GestionEspacios = () => {
 
         });
 
+        // Establecer el bloque seleccionado para mostrar pisos correctos
+        if (espacio.bloque) {
+            setSelectedBloque(espacio.bloque);
+        }
+
         setShowEditModal(true);
 
     };
@@ -391,6 +420,12 @@ const GestionEspacios = () => {
 
             return;
 
+        }
+
+        // Validar que el espacio no esté duplicado (excluyendo el espacio actual)
+        if (isEditEspacioDuplicado()) {
+            toast.error(`El espacio ${editFormData.salon} ya existe en el bloque ${editFormData.bloque} y piso ${editFormData.piso}`);
+            return;
         }
 
 
@@ -487,6 +522,68 @@ const GestionEspacios = () => {
 
     };
 
+    // Manejar cambio de bloque para obtener pisos disponibles en edición
+    const handleEditBloqueChange = (e) => {
+        const bloqueId = e.target.value;
+        
+        // Actualizar editFormData
+        setEditFormData({
+            ...editFormData,
+            bloque: bloqueId,
+            piso: '', // Resetear piso al cambiar de bloque
+            salon: '' // Resetear salon al cambiar de bloque
+        });
+    };
+
+    // Obtener pisos del bloque seleccionado para edición
+    const getEditPisosDisponibles = () => {
+        if (!editFormData.bloque) return [];
+        
+        const bloque = bloques.find(b => b.id === editFormData.bloque);
+        if (!bloque || !bloque.pisos) return [];
+        
+        return bloque.pisos.map(piso => piso.numero).sort((a, b) => a - b);
+    };
+
+    // Obtener salones disponibles para el piso seleccionado en edición
+    const getEditSalonesDisponibles = () => {
+        if (!editFormData.bloque || !editFormData.piso) return [];
+        
+        const bloque = bloques.find(b => b.id === editFormData.bloque);
+        if (!bloque || !bloque.pisos) return [];
+        
+        const piso = bloque.pisos.find(p => p.numero === parseInt(editFormData.piso));
+        if (!piso || !piso.salones) return [];
+        
+        return piso.salones.map(salon => salon.numero).sort();
+    };
+
+    // Validar si el espacio ya existe en el bloque y piso seleccionados (para edición)
+    const isEditEspacioDuplicado = () => {
+        if (!editFormData.bloque || !editFormData.piso || !editFormData.salon) return false;
+        
+        // Buscar espacios existentes en el mismo bloque y piso, excluyendo el espacio actual
+        const espaciosExistentes = espacios.filter(espacio => 
+            espacio.bloque === editFormData.bloque && 
+            espacio.piso === parseInt(editFormData.piso) &&
+            espacio.id !== editFormData.id // Excluir el espacio actual que se está editando
+        );
+        
+        // Verificar si algún espacio existente tiene el mismo número de salon
+        return espaciosExistentes.some(espacio => {
+            // Extraer número de espacio del código (ej: "101" → "1", "110" → "10")
+            if (espacio.salon) {
+                const salonStr = espacio.salon.toString();
+                if (salonStr.length === 3 && salonStr[1] === '0') {
+                    return salonStr[2] === editFormData.salon;
+                } else {
+                    return salonStr.slice(1) === editFormData.salon;
+                }
+            }
+            return false;
+        });
+    };
+
 
 
     const handleInputChange = (e) => {
@@ -501,6 +598,93 @@ const GestionEspacios = () => {
 
         });
 
+    };
+
+    // Manejar cambio de bloque para obtener pisos disponibles
+    const handleBloqueChange = (e) => {
+        const bloqueId = e.target.value;
+        
+        // Actualizar formData
+        setFormData({
+            ...formData,
+            bloque: bloqueId,
+            piso: '', // Resetear piso al cambiar de bloque
+            salon: '' // Resetear salon al cambiar de bloque
+        });
+
+        // Actualizar selectedBloque
+        setSelectedBloque(bloqueId);
+    };
+
+    // Obtener pisos del bloque seleccionado
+    const getPisosDisponibles = () => {
+        if (!selectedBloque) return [];
+        
+        const bloque = bloques.find(b => b.id === selectedBloque);
+        if (!bloque || !bloque.pisos) return [];
+        
+        return bloque.pisos.map(piso => piso.numero).sort((a, b) => a - b);
+    };
+
+    // Obtener salones disponibles para el piso seleccionado
+    const getSalonesDisponibles = () => {
+        if (!selectedBloque || !formData.piso) return [];
+        
+        const bloque = bloques.find(b => b.id === selectedBloque);
+        if (!bloque || !bloque.pisos) return [];
+        
+        const piso = bloque.pisos.find(p => p.numero === parseInt(formData.piso));
+        if (!piso || !piso.salones) return [];
+        
+        return piso.salones.map(salon => salon.numero).sort();
+    };
+
+    // Validar si el espacio ya existe en el bloque y piso seleccionados
+    const isEspacioDuplicado = () => {
+        if (!selectedBloque || !formData.piso || !formData.salon) return false;
+        
+        // Buscar espacios existentes en el mismo bloque y piso
+        const espaciosExistentes = espacios.filter(espacio => 
+            espacio.bloque === selectedBloque && 
+            espacio.piso === parseInt(formData.piso)
+        );
+        
+        // Verificar si algún espacio existente tiene el mismo número de salon
+        return espaciosExistentes.some(espacio => {
+            // Extraer número de espacio del código (ej: "101" → "1", "110" → "10")
+            if (espacio.salon) {
+                const salonStr = espacio.salon.toString();
+                if (salonStr.length === 3 && salonStr[1] === '0') {
+                    return salonStr[2] === formData.salon;
+                } else {
+                    return salonStr.slice(1) === formData.salon;
+                }
+            }
+            return false;
+        });
+    };
+
+    // Obtener espacios existentes en el piso seleccionado
+    const getEspaciosExistentesEnPiso = () => {
+        if (!selectedBloque || !formData.piso) return [];
+        
+        const espaciosExistentes = espacios.filter(espacio => 
+            espacio.bloque === selectedBloque && 
+            espacio.piso === parseInt(formData.piso)
+        );
+        
+        return espaciosExistentes.map(espacio => {
+            // Extraer número de espacio del código
+            if (espacio.salon) {
+                const salonStr = espacio.salon.toString();
+                if (salonStr.length === 3 && salonStr[1] === '0') {
+                    return salonStr[2];
+                } else {
+                    return salonStr.slice(1);
+                }
+            }
+            return '';
+        }).sort((a, b) => parseInt(a) - parseInt(b));
     };
 
 
@@ -823,79 +1007,73 @@ const GestionEspacios = () => {
 
             <div className="mb-6">
 
-                <div className="overflow-x-auto">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
 
-                    <div className="flex space-x-4 pb-2 min-w-max">
+                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
 
-                        <div className="bg-white p-4 rounded-lg shadow min-w-[150px]">
+                        <div className="text-3xl font-bold text-blue-600 mb-2">{espacios.length}</div>
 
-                            <div className="text-2xl font-bold text-blue-600">{espacios.length}</div>
+                        <div className="text-base text-gray-700 font-medium">Total Espacios</div>
 
-                            <div className="text-sm text-gray-600">Total Espacios</div>
+                    </div>
 
-                        </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
 
-                        <div className="bg-white p-4 rounded-lg shadow min-w-[150px]">
+                        <div className="text-3xl font-bold text-orange-600 mb-2">
 
-                            <div className="text-2xl font-bold text-purple-600">
-
-                                {espacios.filter(e => e.tipo === 'Por asignar').length}
-
-                            </div>
-
-                            <div className="text-sm text-gray-600">Por asignar</div>
+                            {espacios.filter(e => e.tipo === 'Por asignar').length}
 
                         </div>
 
-                        <div className="bg-white p-4 rounded-lg shadow min-w-[150px]">
+                        <div className="text-base text-gray-700 font-medium">Por asignar</div>
 
-                            <div className="text-2xl font-bold text-purple-600">
+                    </div>
 
-                                {espacios.filter(e => e.tipo === 'Laboratorio').length}
+                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
 
-                            </div>
+                        <div className="text-3xl font-bold text-green-600 mb-2">
 
-                            <div className="text-sm text-gray-600">Laboratorios</div>
-
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg shadow min-w-[150px]">
-
-                            <div className="text-2xl font-bold text-purple-600">
-
-                                {espacios.filter(e => e.tipo === 'Aula').length}
-
-                            </div>
-
-                            <div className="text-sm text-gray-600">Aulas</div>
+                            {espacios.filter(e => e.tipo === 'Laboratorio').length}
 
                         </div>
 
-                        <div className="bg-white p-4 rounded-lg shadow min-w-[150px]">
+                        <div className="text-base text-gray-700 font-medium">Laboratorios</div>
 
-                            <div className="text-2xl font-bold text-purple-600">
+                    </div>
 
-                                {espacios.filter(e => e.tipo === 'Auditorio').length}
+                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
 
-                            </div>
+                        <div className="text-3xl font-bold text-purple-600 mb-2">
 
-                            <div className="text-sm text-gray-600">Auditorios</div>
-
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg shadow min-w-[150px]">
-
-                            <div className="text-2xl font-bold text-purple-600">
-
-                                {espacios.filter(e => e.tipo === 'Oficina').length}
-
-                            </div>
-
-                            <div className="text-sm text-gray-600">Oficinas</div>
+                            {espacios.filter(e => e.tipo === 'Aula').length}
 
                         </div>
 
-                        
+                        <div className="text-base text-gray-700 font-medium">Aulas</div>
+
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+
+                        <div className="text-3xl font-bold text-red-600 mb-2">
+
+                            {espacios.filter(e => e.tipo === 'Auditorio').length}
+
+                        </div>
+
+                        <div className="text-base text-gray-700 font-medium">Auditorios</div>
+
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+
+                        <div className="text-3xl font-bold text-indigo-600 mb-2">
+
+                            {espacios.filter(e => e.tipo === 'Oficina').length}
+
+                        </div>
+
+                        <div className="text-base text-gray-700 font-medium">Oficinas</div>
 
                     </div>
 
@@ -1065,7 +1243,7 @@ const GestionEspacios = () => {
 
                                                     onClick={() => handleEditEspacio(espacio)}
 
-                                                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-yellow-600 transition-colors flex items-center justify-center"
+                                                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center justify-center"
 
                                                 >
 
@@ -1329,7 +1507,7 @@ const GestionEspacios = () => {
 
                                         value={formData.bloque}
 
-                                        onChange={handleInputChange}
+                                        onChange={handleBloqueChange}
 
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 
@@ -1361,9 +1539,7 @@ const GestionEspacios = () => {
 
                                     </label>
 
-                                    <input
-
-                                        type="number"
+                                    <select
 
                                         name="piso"
 
@@ -1373,13 +1549,25 @@ const GestionEspacios = () => {
 
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 
-                                        placeholder="1"
-
-                                        min="1"
-
                                         required
 
-                                    />
+                                        disabled={!selectedBloque}
+
+                                    >
+
+                                        <option value="">{selectedBloque ? 'Seleccionar piso' : 'Primero selecciona un bloque'}</option>
+
+                                        {getPisosDisponibles().map((piso) => (
+
+                                            <option key={piso} value={piso}>
+
+                                                Piso {piso}
+
+                                            </option>
+
+                                        ))}
+
+                                    </select>
 
                                 </div>
 
@@ -1401,15 +1589,39 @@ const GestionEspacios = () => {
 
                                         onChange={handleInputChange}
 
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            isEspacioDuplicado() ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                        }`}
 
-                                        placeholder="1"
+                                        placeholder="Ej: 1"
 
                                         min="1"
 
                                         required
 
+                                        disabled={!selectedBloque || !formData.piso}
+
                                     />
+
+                                    {formData.salon && isEspacioDuplicado() && (
+
+                                        <p className="text-xs text-red-600 mt-1">
+
+                                            El espacio {formData.salon} ya existe en este bloque y piso
+
+                                        </p>
+
+                                    )}
+
+                                    {formData.piso && !formData.salon && (
+
+                                        <p className="text-xs text-gray-500 mt-1">
+
+                                            💡 Espacios existentes en este piso: {getEspaciosExistentesEnPiso().join(', ') || 'Ninguno'}
+
+                                        </p>
+
+                                    )}
 
                                 </div>
 
@@ -1591,7 +1803,7 @@ const GestionEspacios = () => {
 
                                         value={editFormData.bloque}
 
-                                        onChange={handleEditInputChange}
+                                        onChange={handleEditBloqueChange}
 
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 
@@ -1623,9 +1835,7 @@ const GestionEspacios = () => {
 
                                     </label>
 
-                                    <input
-
-                                        type="number"
+                                    <select
 
                                         name="piso"
 
@@ -1635,13 +1845,25 @@ const GestionEspacios = () => {
 
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 
-                                        placeholder="1"
-
-                                        min="1"
-
                                         required
 
-                                    />
+                                        disabled={!editFormData.bloque}
+
+                                    >
+
+                                        <option value="">{editFormData.bloque ? 'Seleccionar piso' : 'Primero selecciona un bloque'}</option>
+
+                                        {getEditPisosDisponibles().map((piso) => (
+
+                                            <option key={piso} value={piso}>
+
+                                                Piso {piso}
+
+                                            </option>
+
+                                        ))}
+
+                                    </select>
 
                                 </div>
 
@@ -1663,15 +1885,29 @@ const GestionEspacios = () => {
 
                                         onChange={handleEditInputChange}
 
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            isEditEspacioDuplicado() ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                        }`}
 
-                                        placeholder="1"
+                                        placeholder="Ej: 1"
 
                                         min="1"
 
                                         required
 
+                                        disabled={!editFormData.bloque || !editFormData.piso}
+
                                     />
+
+                                    {editFormData.salon && isEditEspacioDuplicado() && (
+
+                                        <p className="text-xs text-red-600 mt-1">
+
+                                             El espacio {editFormData.salon} ya existe en este bloque y piso
+
+                                        </p>
+
+                                    )}
 
                                 </div>
 
@@ -1703,7 +1939,7 @@ const GestionEspacios = () => {
 
                                 onClick={handleUpdateEspacio}
 
-                                className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
                             >
 
@@ -1817,6 +2053,68 @@ const GestionEspacios = () => {
                                 Entendido
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Confirmación de Eliminación */}
+            {showDeleteConfirmModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                            <FiTrash2 className="w-6 h-6 text-red-600" />
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            ¿Eliminar Espacio?
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-6 text-center">
+                            ¿Está seguro de que desea eliminar este espacio? Esta acción no se puede deshacer.
+                        </p>
+                        
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={cancelDeleteEspacio}
+                                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDeleteEspacio}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Éxito */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
+                            ¡Espacio Eliminado!
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-6 text-center">
+                            El espacio ha sido eliminado exitosamente del sistema.
+                        </p>
+                        
+                        <button
+                            onClick={closeSuccessModal}
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                            Entendido
+                        </button>
                     </div>
                 </div>
             )}

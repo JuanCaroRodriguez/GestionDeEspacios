@@ -26,7 +26,10 @@ export const usuariosService = {
   // Obtener usuario por email
   getByEmail: async (email) => {
     try {
-      const response = await axiosInstance.get(`/usuarios/email/${email}`);
+      // Usar el endpoint de superadmin para buscar por email
+      const response = await axiosInstance.get(
+        `/superadmin/usuarios/email/${email}`,
+      );
       return response.data;
     } catch (error) {
       console.error("Error al obtener usuario por email:", error);
@@ -34,13 +37,10 @@ export const usuariosService = {
     }
   },
 
-  // Crear nuevo usuario (solo SuperAdmin)
+  // Crear nuevo usuario
   create: async (usuarioData) => {
     try {
-      const response = await axiosInstance.post(
-        "/superadmin/usuarios",
-        usuarioData,
-      );
+      const response = await axiosInstance.post("/usuarios", usuarioData);
       return response.data;
     } catch (error) {
       console.error("Error al crear usuario:", error);
@@ -129,6 +129,19 @@ export const usuariosService = {
       return response.data;
     } catch (error) {
       console.error("Error al obtener usuarios por empresa:", error);
+      throw error;
+    }
+  },
+
+  // Actualizar estado de usuario
+  updateEstado: async (id, estado) => {
+    try {
+      const response = await axiosInstance.put(`/usuarios/${id}/estado`, {
+        estado,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al actualizar estado del usuario:", error);
       throw error;
     }
   },

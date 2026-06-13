@@ -41,7 +41,6 @@ export const API_PROTOTYPES = Object.freeze({
         return response.data;
       } catch (error) {
         console.error("Error en el inicio de sesión:", error);
-        console.log("Services - Error details:", error.response?.data); // Debug error details
         throw error;
       }
     },

@@ -3,12 +3,32 @@ import Sidebar from '@components/Dashboard/Sidebar';
 import useSession from '@context/Auth/useSession';
 import CrearEmpresa from '@components/Empresa/CrearEmpresa';
 import empresasService from '@api/services/empresas.service';
+import reservasService from '@api/services/reservas.service';
+import { FiCalendar ,FiTrello } from 'react-icons/fi';
+import { IoIosAddCircleOutline } from "react-icons/io";
+
 
 const Dashboard = () => {
     const { session } = useSession();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [empresa, setEmpresa] = useState(null);
     const [loadingEmpresa, setLoadingEmpresa] = useState(true);
+    const [reservasPendientes, setReservasPendientes] = useState(0);
+    const [loadingReservas, setLoadingReservas] = useState(false);
+
+    // Atajo de teclado para toggle sidebar (Ctrl+B o Cmd+B)
+    useEffect(() => {
+        const handleKeyPress = (event) => {
+            // Ctrl+B o Cmd+B
+            if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+                event.preventDefault();
+                setSidebarOpen(!sidebarOpen);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [sidebarOpen]);
 
     // Verificar si el superadmin tiene empresa
     useEffect(() => {
@@ -36,6 +56,34 @@ const Dashboard = () => {
         };
 
         verificarEmpresa();
+    }, [session]);
+
+    // Cargar reservas pendientes para administradores
+    const cargarReservasPendientes = async () => {
+        if (!session?.user?.id_empresa || session?.user?.tipo !== 'administrador') {
+            return;
+        }
+
+        try {
+            setLoadingReservas(true);
+            const todasReservas = await reservasService.getAllByEmpresa(session.user.id_empresa);
+            
+            // Contar reservas en estado "Pendiente"
+            const pendientes = todasReservas.filter(reserva => reserva.estado === 'Pendiente').length;
+            setReservasPendientes(pendientes);
+        } catch (error) {
+            console.error('Error al cargar reservas pendientes:', error);
+            setReservasPendientes(0);
+        } finally {
+            setLoadingReservas(false);
+        }
+    };
+
+    // Cargar reservas pendientes cuando el usuario es administrador
+    useEffect(() => {
+        if (session?.user?.tipo === 'administrador' && session?.user?.id_empresa) {
+            cargarReservasPendientes();
+        }
     }, [session]);
 
     const handleEmpresaCreada = (empresaCreada) => {
@@ -80,7 +128,7 @@ const Dashboard = () => {
                                 <button
                                     onClick={() => {
                                         localStorage.removeItem('session');
-                                        window.location.href = '/auth/welcome';
+                                        window.location.href = '/auth';
                                     }}
                                     className="px-4 py-2 text-red-600 hover:text-red-800 text-sm font-medium"
                                 >
@@ -152,14 +200,16 @@ const Dashboard = () => {
                         <h1 className="text-3xl font-bold text-gray-900 mb-6">
                             Panel de Administrador
                         </h1>
-                        <div className="bg-white p-6 rounded-lg shadow">
-                            <h2 className="text-xl font-semibold mb-4">📋 Evaluar reservas de laboratorios</h2>
+                        <div className="bg-white p-6 rounded-lg shadow f">
+                            <h2 className="text-xl font-semibold mb-4 flex">
+                                <FiTrello  className="w-6 h-6" />
+                                 Gestión de reservas</h2>
                             <p className="text-gray-600 mb-4">
-                                Revisa y aprueba las solicitudes de reserva para espacios exclusivos de sistemas.
+                                Gestión de reservas de los espacios
                             </p>
                             <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
                                 <p className="text-sm text-yellow-800">
-                                    <strong>Pendientes:</strong> 5 solicitudes esperando aprobación
+                                    <strong>Pendientes:</strong> {loadingReservas ? 'Cargando...' : `${reservasPendientes} solicitudes esperando aprobación`}
                                 </p>
                             </div>
                         </div>
@@ -174,13 +224,29 @@ const Dashboard = () => {
                             Panel de {session.user.tipo === 'docente' ? 'Docente' : 'Estudiante'}
                         </h1>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">📅 Mis reservas</h2>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/mis-reservas'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                    <FiCalendar className="w-5 h-5" /> Mis reservas
+                                </h2>
                                 <p className="text-gray-600">Gestiona tus reservas activas</p>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Ver mis reservas →
+                                </div>
                             </div>
-                            <div className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">➕ Nueva reserva</h2>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/consulta-espacios'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                    <IoIosAddCircleOutline className="w-5 h-5" /> Nueva reserva
+                                </h2>
                                 <p className="text-gray-600">Crea una nueva reserva</p>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Reservar espacio →
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -208,10 +274,22 @@ const Dashboard = () => {
     return (
         <div className="flex h-screen bg-gray-100">
             {/* Sidebar */}
-            {sidebarOpen && shouldShowSidebar && (
-                <div className="fixed inset-y-0 left-0 z-50 md:relative md:z-auto">
-                    <Sidebar user={session?.user} empresa={empresa} />
+            {shouldShowSidebar && (
+                <div className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out transform ${
+                    sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'
+                } md:relative md:translate-x-0 md:transition-all md:duration-300 md:ease-in-out ${
+                    sidebarOpen ? 'md:w-64' : 'md:w-16'
+                }`}>
+                    <Sidebar user={session?.user} empresa={empresa} collapsed={!sidebarOpen} />
                 </div>
+            )}
+
+            {/* Overlay for mobile */}
+            {sidebarOpen && shouldShowSidebar && (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
             )}
 
             {/* Main Content */}
@@ -223,9 +301,23 @@ const Dashboard = () => {
                         <div className="flex items-center">
                             <button
                                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
+                                className="group relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
                             >
-                                <span className="text-xl">☰</span>
+                                <svg 
+                                    className={`w-6 h-6 transition-all duration-300 ${sidebarOpen ? 'rotate-0' : 'rotate-180'}`}
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                                </svg>
+                                
+                                {/* Tooltip */}
+                                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50">
+                                    <div>{sidebarOpen ? 'Contraer barra lateral' : 'Expandir barra lateral'}</div>
+                                    <div className="text-xs text-gray-400">Ctrl+B</div>
+                                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                                </div>
                             </button>
                             <h1 className="ml-4 text-xl font-semibold text-gray-900">
                                 ClassMatch Dashboard
@@ -241,10 +333,35 @@ const Dashboard = () => {
                 )}
 
                 {/* Main Content Area */}
-                <main className="flex-1 overflow-auto">
+                <main className="flex-1 overflow-auto relative">
                     <div className={shouldShowSidebar ? "p-6" : "p-0"}>
                         {renderMainContent()}
                     </div>
+                    
+                    {/* Botón flotante para toggle sidebar */}
+                    {shouldShowSidebar && (
+                        <button
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 z-50 group"
+                            title={sidebarOpen ? 'Contraer barra lateral (Ctrl+B)' : 'Expandir barra lateral (Ctrl+B)'}
+                        >
+                            <svg 
+                                className={`w-6 h-6 transition-all duration-300 ${sidebarOpen ? 'rotate-0' : 'rotate-180'}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                            </svg>
+                            
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full mb-2 right-0 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap">
+                                <div>{sidebarOpen ? 'Contraer barra lateral' : 'Expandir barra lateral'}</div>
+                                <div className="text-xs text-gray-400">Ctrl+B</div>
+                                <div className="absolute top-full right-4 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                        </button>
+                    )}
                 </main>
             </div>
         </div>
