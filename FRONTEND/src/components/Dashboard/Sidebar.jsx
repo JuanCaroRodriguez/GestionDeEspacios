@@ -1,6 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@tools/CONSTANTS';
 import { FiSearch, FiHome, FiUsers, FiUserPlus, FiCalendar, FiLogOut } from 'react-icons/fi';
+import Logo from '../../assets/LogoIsoft.png';
+
 
 const Sidebar = ({ user, empresa, collapsed = false }) => {
     const location = useLocation();
@@ -86,23 +88,27 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
         <div className={`bg-gray-800 text-white h-full transition-all duration-300 ease-in-out ${
             collapsed ? 'w-16' : 'w-64'
         }`}>
-            {/* Header */}
+            {/* Header - Logo y Nombre del Aplicativo */}
             <div className={`p-4 border-b border-gray-700 transition-all duration-300 ${
                 collapsed ? 'flex justify-center' : ''
             }`}>
-                <div className={`flex items-center ${collapsed ? '' : 'space-x-3'}`}>
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-semibold">
-                            {user?.nombre?.charAt(0)?.toUpperCase()}
-                        </span>
-                    </div>
+                <Link 
+                    to={ROUTES.dashboard.home} 
+                    className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'} hover:opacity-80 transition-opacity cursor-pointer no-underline`}
+                >
+                    <img 
+                        src={Logo} 
+                        alt="Logo ClassMatch" 
+                        className={`flex-shrink-0 ${collapsed ? 'w-8 h-8' : 'w-10 h-10'}`}
+                    />
                     {!collapsed && (
                         <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-sm truncate">{user?.nombre}</div>
-                            <div className="text-xs text-gray-400 capitalize">{user?.tipo}</div>
+                            <div className="font-bold text-lg text-white no-underline">
+                                Class<span className="text-blue-400">Match</span>
+                            </div>
                         </div>
                     )}
-                </div>
+                </Link>
             </div>
 
             {/* Navigation */}

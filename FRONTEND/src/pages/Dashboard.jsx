@@ -4,7 +4,7 @@ import useSession from '@context/Auth/useSession';
 import CrearEmpresa from '@components/Empresa/CrearEmpresa';
 import empresasService from '@api/services/empresas.service';
 import reservasService from '@api/services/reservas.service';
-import { FiCalendar ,FiTrello } from 'react-icons/fi';
+import { FiCalendar ,FiTrello, FiSearch, FiHome, FiUsers, FiUserPlus } from 'react-icons/fi';
 import { IoIosAddCircleOutline } from "react-icons/io";
 
 
@@ -154,8 +154,33 @@ const Dashboard = () => {
                             Panel de Super Administrador
                         </h1>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">🏢 Gestión de espacios</h2>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/consulta-espacios'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex">
+                                    <FiSearch className="w-6 h-6" />
+                                     Consulta de disponibilidad</h2>
+                                <p className="text-gray-600 mb-4">
+                                    Consultar horarios y disponibilidad de espacios
+                                </p>
+                                <div className="space-y-2 text-sm text-gray-500">
+                                    <p>• Ver disponibilidad por fecha</p>
+                                    <p>• Consultar por tipo de espacio</p>
+                                    <p>• Verificar horarios disponibles</p>
+                                    <p>• Planificar reservas</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Consultar espacios →
+                                </div>
+                            </div>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/espacios'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <FiHome className="w-6 h-6" /> Gestión de espacios
+                            </h2>
                                 <p className="text-gray-600 mb-4">
                                     Administra todos los espacios y laboratorios del sistema.
                                 </p>
@@ -163,23 +188,18 @@ const Dashboard = () => {
                                     <p>• Crear nuevos espacios</p>
                                     <p>• Modificar espacios existentes</p>
                                     <p>• Eliminar espacios no utilizados</p>
-                                    <p>• Ver disponibilidad</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Gestionar espacios →
                                 </div>
                             </div>
-                            <div className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">🏗️ Gestión de bloques</h2>
-                                <p className="text-gray-600 mb-4">
-                                    Organiza los bloques, pisos y salones de tu empresa.
-                                </p>
-                                <div className="space-y-2 text-sm text-gray-500">
-                                    <p>• Crear bloques</p>
-                                    <p>• Configurar pisos</p>
-                                    <p>• Definir salones por piso</p>
-                                    <p>• Ver estructura completa</p>
-                                </div>
-                            </div>
-                            <div className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4">👥 Gestión de usuarios</h2>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/usuarios'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <FiUsers className="w-6 h-6" /> Gestión de usuarios
+                            </h2>
                                 <p className="text-gray-600 mb-4">
                                     Controla el acceso de usuarios al sistema.
                                 </p>
@@ -187,7 +207,27 @@ const Dashboard = () => {
                                     <p>• Crear nuevas cuentas</p>
                                     <p>• Modificar datos de usuario</p>
                                     <p>• Suspender usuarios</p>
-                                    <p>• Verificar permisos</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Gestionar usuarios →
+                                </div>
+                            </div>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/administradores'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <FiUserPlus className="w-6 h-6" /> Gestión de administradores
+                            </h2>
+                                <p className="text-gray-600 mb-4">
+                                    Administra las cuentas de administradores del sistema.
+                                </p>
+                                <div className="space-y-2 text-sm text-gray-500">
+                                    <p>• Crear cuentas de administrador</p>
+                                    <p>• Suspender administradores</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Gestionar administradores →
                                 </div>
                             </div>
                         </div>
@@ -200,17 +240,45 @@ const Dashboard = () => {
                         <h1 className="text-3xl font-bold text-gray-900 mb-6">
                             Panel de Administrador
                         </h1>
-                        <div className="bg-white p-6 rounded-lg shadow f">
-                            <h2 className="text-xl font-semibold mb-4 flex">
-                                <FiTrello  className="w-6 h-6" />
-                                 Gestión de reservas</h2>
-                            <p className="text-gray-600 mb-4">
-                                Gestión de reservas de los espacios
-                            </p>
-                            <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                                <p className="text-sm text-yellow-800">
-                                    <strong>Pendientes:</strong> {loadingReservas ? 'Cargando...' : `${reservasPendientes} solicitudes esperando aprobación`}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/evaluar-reservas'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex">
+                                    <FiCalendar  className="w-6 h-6" />
+                                     Evaluar reservas</h2>
+                                <p className="text-gray-600 mb-4">
+                                    Gestión de reservas de los espacios
                                 </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                                    <p className="text-sm text-yellow-800">
+                                        <strong>Pendientes:</strong> {loadingReservas ? 'Cargando...' : `${reservasPendientes} solicitudes esperando aprobación`}
+                                    </p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Evaluar reservas →
+                                </div>
+                            </div>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/consulta-espacios'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex">
+                                    <FiSearch className="w-6 h-6" />
+                                     Consulta de disponibilidad</h2>
+                                <p className="text-gray-600 mb-4">
+                                    Consultar horarios y disponibilidad de espacios
+                                </p>
+                                <div className="space-y-2 text-sm text-gray-500">
+                                    <p>• Ver disponibilidad por fecha</p>
+                                    <p>• Consultar por tipo de espacio</p>
+                                    <p>• Verificar horarios disponibles</p>
+                                    <p>• Planificar reservas</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Consultar espacios →
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -324,6 +392,15 @@ const Dashboard = () => {
                             </h1>
                         </div>
                         <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-sm font-semibold">
+                                        {session?.user?.nombre?.charAt(0)?.toUpperCase()}
+                                    </span>
+                                </div>
+                                <span className="text-sm text-gray-700">{session?.user?.nombre}</span>
+                                <span className="text-xs text-gray-500 capitalize">({session?.user?.tipo})</span>
+                            </div>
                             <span className="text-sm text-gray-500">
                                 {new Date().toLocaleDateString()}
                             </span>

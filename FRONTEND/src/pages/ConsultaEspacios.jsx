@@ -637,7 +637,29 @@ const ConsultaDisponibilidad = () => {
                     bloquesService.getByIdEmpresa(idEmpresa)
                 ]);
                 
-                setEspacios(espaciosData);
+                // Filtrar espacios según el rol del usuario
+                let espaciosFiltrados = espaciosData;
+                const userTipo = session?.user?.tipo;
+                
+                if (userTipo === 'superadmin') {
+                    // Superadmin: todos los tipos de espacios (sin filtro)
+                    espaciosFiltrados = espaciosData;
+                } else if (userTipo === 'administrador') {
+                    // Administrador: todos menos oficinas
+                    espaciosFiltrados = espaciosData.filter(espacio => 
+                        espacio.tipo.toLowerCase() !== 'oficina' &&
+                        espacio.tipo.toLowerCase() !== 'por asignar'
+                    );
+                } else if (userTipo === 'estudiante' || userTipo === 'docente') {
+                    // Estudiante/Docente: solo aulas y laboratorios
+                    espaciosFiltrados = espaciosData.filter(espacio => {
+                        const tipo = espacio.tipo.toLowerCase();
+                        return tipo === 'aula' || tipo === 'laboratorio';
+                    });
+                }
+                
+                
+                setEspacios(espaciosFiltrados);
                 setBloques(bloquesData);
                 
                 
@@ -841,7 +863,7 @@ const ConsultaDisponibilidad = () => {
                                             textAnchor="middle"
                                             className="text-xs fill-gray-600 pointer-events-none"
                                         >
-                                            {espacios.length} salones
+                                            {espacios.length} espacios
                                         </text>
                                         <text
                                             x={layout.x + layout.width/2}
