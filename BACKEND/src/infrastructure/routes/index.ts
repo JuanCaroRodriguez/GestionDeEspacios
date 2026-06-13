@@ -7,6 +7,7 @@ import administradorRoutes from "./administrador.routes";
 import authRoutes from "./auth.routes";
 import empresaRoutes from "./empresa.routes";
 import bloqueRoutes from "./bloque.routes";
+import disponibilidadRoutes from "./disponibilidad.routes";
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.use("/empresas", empresaRoutes);
 router.use("/bloques", bloqueRoutes);
 router.use("/superadmin", superadminRoutes);
 router.use("/administrador", administradorRoutes);
+router.use("/disponibilidad", disponibilidadRoutes);
 
 // Ruta de健康 check
 router.get("/health", (req, res) => {

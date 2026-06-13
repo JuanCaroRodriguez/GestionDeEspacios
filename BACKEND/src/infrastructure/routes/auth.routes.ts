@@ -14,8 +14,6 @@ router.post("/login", async (req, res) => {
   try {
     const { email, contraseña, tipo } = req.body;
 
-    
-
     // Validaciones
     if (!email || !contraseña || !tipo) {
       return res.status(400).json({
@@ -67,6 +65,7 @@ router.post("/login", async (req, res) => {
             id: user.getId(),
             nombre: user.getNombre(),
             email: user.getEmail(),
+            id_empresa: user.getIdEmpresa() ||null,
             tipo: "administrador",
             permisos: ["evaluar_reservas_laboratorios"],
           };
@@ -80,7 +79,9 @@ router.post("/login", async (req, res) => {
             id: user.getId(),
             nombre: user.getNombre(),
             email: user.getEmail(),
-            tipo: (user as any).getTipo(), // 'estudiante' o 'docente'
+            tipo: user.getTipo(), // 'estudiante' o 'docente'
+            estado: user.getEstado() || "activo",
+            id_empresa: user.getIdEmpresa() || null,
             permisos: [
               "reservar_espacios",
               "consultar_disponibilidad",
@@ -93,14 +94,11 @@ router.post("/login", async (req, res) => {
 
     // Verificar si se encontró el usuario
     if (!user) {
-      
-      return res.status(401).json({
-        error: "Credenciales inválidas",
+      return res.json({
+        estado: "Credenciales no validas",
         message: "El email no está registrado para este tipo de usuario",
       });
     }
-
-    
 
     // Verificar contraseña usando bcrypt
     const isPasswordValid = await bcrypt.compare(
@@ -108,19 +106,38 @@ router.post("/login", async (req, res) => {
       user.getContraseña(),
     );
     if (!isPasswordValid) {
-      
-      return res.status(401).json({
-        error: "Credenciales inválidas",
+      return res.json({
+        estado: "Credenciales no validas",
         message: "La contraseña es incorrecta",
       });
     }
 
-    // Respuesta exitosa
-    res.json({
-      success: true,
+    // Para superadmin: solo validar credenciales
+    if (tipo === "superadmin") {
+      return res.json({
+        estado: "sin errores",
+        message: "Login exitoso",
+        user: userData,
+        token: `mock-jwt-token-${user.getId()}`,
+      });
+    }
+
+    // Para otros tipos de usuario: validar estado
+    const estadoUsuario = (user as any).getEstado() || "activo";
+    if (estadoUsuario === "inactivo") {
+      return res.json({
+        estado: "inactivo",
+        message:
+          "Tu cuenta de usuario se encuentra inactiva. Por favor, contacta al administrador del sistema.",
+      });
+    }
+
+    // Usuario activo - respuesta exitosa
+    return res.json({
+      estado: "sin errores",
       message: "Login exitoso",
       user: userData,
-      token: `mock-jwt-token-${user.getId()}`, // En producción, usar JWT real
+      token: `mock-jwt-token-${user.getId()}`,
     });
   } catch (error) {
     console.error("Error en login:", error);

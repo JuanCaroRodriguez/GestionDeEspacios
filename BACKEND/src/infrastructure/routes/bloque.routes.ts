@@ -43,6 +43,7 @@ router.post("/", async (req, res) => {
       for (const pisoData of pisos) {
         const numeroPiso = pisoData.numero;
         const cantidadSalones = pisoData.cantidadSalones;
+        const capacidadesSalones = pisoData.capacidadesSalones || [];
 
         // Crear espacios para este piso
         for (let salonNum = 1; salonNum <= cantidadSalones; salonNum++) {
@@ -55,11 +56,15 @@ router.post("/", async (req, res) => {
               ? `${numeroPiso}0${salonNum}`
               : `${numeroPiso}${salonNum}`;
 
+          // Obtener capacidad para este espacio (individual o general)
+          const capacidadEspacio =
+            capacidadesSalones[salonNum - 1] || pisoData.capacidadSalones || 30;
+
           const espacio = new Espacio(
             espacioId,
             nombreEspacio,
             "Por asignar", // tipo
-            0, // capacidad
+            capacidadEspacio, // capacidad ✅ USAR CAPACIDAD CORRECTA
             id, // id_bloque
             numeroPiso, // piso
             salonFormato, // salon (formato nuevo)
@@ -178,12 +183,15 @@ router.delete("/:id", async (req, res) => {
 // POST /api/bloques/:id/pisos - Añadir piso a un bloque
 router.post("/:id/pisos", async (req, res) => {
   try {
-    const { numero, cantidadSalones } = req.body;
+    const { numero, cantidadSalones, capacidadSalones, capacidadesSalones } =
+      req.body;
 
-    if (!numero || !cantidadSalones) {
+    if (!numero || !cantidadSalones || !capacidadSalones) {
       return res
         .status(400)
-        .json({ error: "El número y cantidad de salones son obligatorios" });
+        .json({
+          error: "El número, cantidad de salones y capacidad son obligatorios",
+        });
     }
 
     const bloque = await bloqueRepository.findById(req.params.id);
@@ -193,7 +201,43 @@ router.post("/:id/pisos", async (req, res) => {
 
     bloque.addPiso(numero, cantidadSalones);
     const updatedBloque = await bloqueRepository.update(req.params.id, bloque);
-    res.json(updatedBloque);
+
+    // Crear espacios para el nuevo piso con capacidad correcta
+    const { Espacio } = await import("../../domain/Espacio");
+    const espaciosCreados = [];
+
+    for (let salonNum = 1; salonNum <= cantidadSalones; salonNum++) {
+      const espacioId = uuidv4();
+      const nombreEspacio = `${bloque.getNombre()} - Piso ${numero} - Espacio ${salonNum}`;
+
+      // Formato del salon: [numeropiso][0 si salon<10][numerosalon]
+      const salonFormato =
+        salonNum < 10 ? `${numero}0${salonNum}` : `${numero}${salonNum}`;
+
+      // Obtener capacidad para este espacio (individual o general)
+      const capacidadEspacio =
+        capacidadesSalones?.[salonNum - 1] || capacidadSalones || 30;
+
+      const espacio = new Espacio(
+        espacioId,
+        nombreEspacio,
+        "Por asignar", // tipo
+        capacidadEspacio, // capacidad ✅ USAR CAPACIDAD CORRECTA
+        bloque.getId(), // id_bloque
+        numero, // piso
+        salonFormato, // salon
+        bloque.getIdEmpresa(), // id_empresa
+      );
+
+      const createdEspacio = await espacioRepository.create(espacio);
+      espaciosCreados.push(createdEspacio);
+    }
+
+    res.status(201).json({
+      bloque: updatedBloque,
+      espacios: espaciosCreados,
+      totalEspacios: espaciosCreados.length,
+    });
   } catch (error) {
     console.error("Error al añadir piso:", error);
     res.status(500).json({ error: "Error al añadir piso" });

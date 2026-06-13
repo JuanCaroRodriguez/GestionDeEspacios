@@ -2,6 +2,7 @@ import { Persona } from "./Persona";
 
 export class Usuario extends Persona {
   private tipo: "estudiante" | "docente";
+  private id_empresa: string | null;
 
   constructor(
     id: string,
@@ -10,9 +11,11 @@ export class Usuario extends Persona {
     contraseña: string,
     tipo: "estudiante" | "docente" = "estudiante",
     estado: "activo" | "inactivo" | "suspendido" = "activo",
+    id_empresa: string | null = null,
   ) {
     super(id, nombre, email, contraseña, estado);
     this.tipo = tipo;
+    this.id_empresa = id_empresa;
   }
 
   // Getter y Setter para tipo
@@ -22,6 +25,15 @@ export class Usuario extends Persona {
 
   public setTipo(tipo: "estudiante" | "docente"): void {
     this.tipo = tipo;
+  }
+
+  // Getter y Setter para id_empresa
+  public getIdEmpresa(): string | null {
+    return this.id_empresa;
+  }
+
+  public setIdEmpresa(id_empresa: string | null): void {
+    this.id_empresa = id_empresa;
   }
 
   // Getter y Setter para estado (sobreescribir para tipado específico)

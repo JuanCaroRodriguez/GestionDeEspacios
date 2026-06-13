@@ -13,6 +13,7 @@ export class AdministradorRepository implements IAdministradorRepository {
       email: administrador.getEmail(),
       contraseña: administrador.getContraseña(),
       permisos: ["evaluar_reservas_laboratorios"],
+      id_empresa: administrador.getIdEmpresa(),
     });
 
     const savedAdministrador = await administradorDoc.save();
@@ -95,6 +96,7 @@ export class AdministradorRepository implements IAdministradorRepository {
       administradorDoc.nombre,
       administradorDoc.email,
       administradorDoc.contraseña,
+      administradorDoc.id_empresa,
       administradorDoc.estado,
     );
     return administrador;

@@ -10,8 +10,9 @@ export interface IReserva extends Document {
   tipo: "permanente" | "ocasional";
   fechaInicio: Date;
   fechaFin: Date;
-  estado: "activa" | "cancelada" | "completada" | "pendiente";
-  motivo?: string;
+  estado: "Reservada" | "Ejecutada" | "Cancelada" | "Pendiente";
+  motivo: string;
+  id_empresa: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,13 +61,17 @@ const ReservaSchema = new Schema<IReserva>(
     },
     estado: {
       type: String,
-      enum: ["activa", "cancelada", "completada", "pendiente"],
-      default: "activa",
+      enum: ["Reservada", "Ejecutada", "Cancelada", "Pendiente"],
+      default: "Reservada",
       required: true,
     },
     motivo: {
       type: String,
-      required: false,
+      required: true,
+    },
+    id_empresa: {
+      type: String,
+      required: true,
     },
   },
   {
@@ -79,5 +84,7 @@ const ReservaSchema = new Schema<IReserva>(
 ReservaSchema.index({ espacioId: 1, fechaInicio: 1, fechaFin: 1 });
 ReservaSchema.index({ personaId: 1 });
 ReservaSchema.index({ estado: 1 });
+ReservaSchema.index({ id_empresa: 1 });
+ReservaSchema.index({ espacioId: 1, id_empresa: 1 });
 
 export const ReservaModel = model<IReserva>("Reserva", ReservaSchema);

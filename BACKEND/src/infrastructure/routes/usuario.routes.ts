@@ -102,6 +102,90 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// POST - Crear usuario
+router.post("/", async (req, res) => {
+  try {
+    const { id, nombre, email, contraseña, tipo, estado, id_empresa } =
+      req.body;
+
+    // Validaciones básicas
+    if (!id || !nombre || !email || !contraseña || !tipo || !id_empresa) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+
+    // Validar tipo
+    if (!["estudiante", "docente"].includes(tipo)) {
+      return res.status(400).json({ error: "Tipo de usuario no válido" });
+    }
+
+    // Validar estado
+    if (!["activo", "inactivo", "suspendido"].includes(estado)) {
+      return res.status(400).json({ error: "Estado no válido" });
+    }
+
+    // Verificar si el email ya existe
+    const usuarioExistente = await usuarioRepository.findByEmail(email);
+    if (usuarioExistente) {
+      return res.status(400).json({ error: "El email ya está registrado" });
+    }
+
+    // Hashear contraseña
+    const bcrypt = await import("bcryptjs");
+    const contraseñaHasheada = await bcrypt.hash(contraseña, 8);
+
+    // Crear usuario directamente con el modelo
+    const { UsuarioModel } = await import("../models/Usuario.model");
+    const nuevoUsuario = new UsuarioModel({
+      id,
+      nombre,
+      email,
+      contraseña: contraseñaHasheada,
+      tipo,
+      estado: estado || "activo",
+      id_empresa,
+    });
+
+    // Guardar en la base de datos
+    const usuarioGuardado = await nuevoUsuario.save();
+
+    // Crear respuesta sin contraseña
+    const usuarioSinContraseña = {
+      id: usuarioGuardado.id,
+      nombre: usuarioGuardado.nombre,
+      email: usuarioGuardado.email,
+      tipo: usuarioGuardado.tipo,
+      estado: usuarioGuardado.estado,
+      id_empresa: usuarioGuardado.id_empresa,
+    };
+
+    res.status(201).json(usuarioSinContraseña);
+  } catch (error) {
+    console.error("Error al crear usuario:", error);
+    res.status(500).json({ error: "Error al crear usuario" });
+  }
+});
+
+// PUT - Actualizar estado de usuario
+router.put("/:id/estado", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    if (!estado || !["activo", "inactivo", "suspendido"].includes(estado)) {
+      return res.status(400).json({ error: "Estado no válido" });
+    }
+
+    const updatedUsuario = await usuarioRepository.updateEstado(id, estado);
+    if (!updatedUsuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.json(updatedUsuario);
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar estado del usuario" });
+  }
+});
+
 // DELETE - Eliminar usuario
 router.delete("/:id", async (req, res) => {
   try {

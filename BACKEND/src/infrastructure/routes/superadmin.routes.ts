@@ -61,13 +61,56 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// GET - Obtener administrador por email
+router.get("/administradores/email/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { AdministradorRepository } =
+      await import("../repositories/Administrador.repository");
+    const administradorRepository = new AdministradorRepository();
+    const administrador = await administradorRepository.findByEmail(email);
+    if (!administrador) {
+      return res.status(404).json({ error: "Administrador no encontrado" });
+    }
+    res.json(administrador);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener administrador por email" });
+  }
+});
+
+// GET - Obtener usuario por email
+router.get("/usuarios/email/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const usuario = await usuarioRepository.findByEmail(email);
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json(usuario);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener usuario por email" });
+  }
+});
+
 // Rutas para gestión de usuarios
 router.post("/usuarios", async (req, res) => {
   try {
-    const { id, nombre, email, contraseña, tipo = "estudiante" } = req.body;
+    const {
+      id,
+      nombre,
+      email,
+      contraseña,
+      tipo = "estudiante",
+      id_empresa,
+    } = req.body;
 
-    if (!id || !nombre || !email || !contraseña) {
+    if (!id || !nombre || !email || !contraseña || !id_empresa) {
       return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+
+    // Validar tipo
+    if (!["estudiante", "docente"].includes(tipo)) {
+      return res.status(400).json({ error: "Tipo de usuario no válido" });
     }
 
     // Verificar si ya existe
@@ -85,13 +128,34 @@ router.post("/usuarios", async (req, res) => {
     const bcrypt = await import("bcryptjs");
     const contraseñaHasheada = await bcrypt.hash(contraseña, 8);
 
-    // Crear usuario con contraseña hasheada
-    const { Usuario } = await import("../../domain/Usuario");
-    const usuario = new Usuario(id, nombre, email, contraseñaHasheada, tipo);
+    // Crear usuario directamente con el modelo
+    const { UsuarioModel } = await import("../models/Usuario.model");
+    const nuevoUsuario = new UsuarioModel({
+      id,
+      nombre,
+      email,
+      contraseña: contraseñaHasheada,
+      tipo,
+      estado: "activo",
+      id_empresa,
+    });
 
-    const createdUsuario = await usuarioRepository.create(usuario);
-    res.status(201).json(createdUsuario);
+    // Guardar en la base de datos
+    const usuarioGuardado = await nuevoUsuario.save();
+
+    // Crear respuesta sin contraseña
+    const usuarioSinContraseña = {
+      id: usuarioGuardado.id,
+      nombre: usuarioGuardado.nombre,
+      email: usuarioGuardado.email,
+      tipo: usuarioGuardado.tipo,
+      estado: usuarioGuardado.estado,
+      id_empresa: usuarioGuardado.id_empresa,
+    };
+
+    res.status(201).json(usuarioSinContraseña);
   } catch (error) {
+    console.error("Error al crear usuario:", error);
     res.status(500).json({ error: "Error al crear usuario" });
   }
 });
@@ -175,9 +239,9 @@ router.put("/usuarios/:id", async (req, res) => {
 // Rutas para gestión de administradores
 router.post("/administradores", async (req, res) => {
   try {
-    const { id, nombre, email, contraseña } = req.body;
+    const { id, nombre, email, contraseña, id_empresa } = req.body;
 
-    if (!id || !nombre || !email || !contraseña) {
+    if (!id || !nombre || !email || !contraseña || !id_empresa) {
       return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
 
@@ -199,18 +263,33 @@ router.post("/administradores", async (req, res) => {
     const bcrypt = await import("bcryptjs");
     const contraseñaHasheada = await bcrypt.hash(contraseña, 8);
 
-    // Crear administrador con contraseña hasheada
-    const { Administrador } = await import("../../domain/Administrador");
-    const administrador = new Administrador(
+    // Crear administrador directamente con el modelo
+    const { AdministradorModel } =
+      await import("../models/Administrador.model");
+    const nuevoAdministrador = new AdministradorModel({
       id,
       nombre,
       email,
-      contraseñaHasheada,
-    );
+      contraseña: contraseñaHasheada,
+      permisos: ["evaluar_reservas_laboratorios"],
+      estado: "activo",
+      id_empresa,
+    });
 
-    const createdAdministrador =
-      await administradorRepository.create(administrador);
-    res.status(201).json(createdAdministrador);
+    // Guardar en la base de datos
+    const administradorGuardado = await nuevoAdministrador.save();
+
+    // Crear respuesta sin contraseña
+    const administradorSinContraseña = {
+      id: administradorGuardado.id,
+      nombre: administradorGuardado.nombre,
+      email: administradorGuardado.email,
+      permisos: administradorGuardado.permisos,
+      estado: administradorGuardado.estado,
+      id_empresa: administradorGuardado.id_empresa,
+    };
+
+    res.status(201).json(administradorSinContraseña);
   } catch (error) {
     res.status(500).json({ error: "Error al crear administrador" });
   }

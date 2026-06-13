@@ -1,14 +1,26 @@
 import { Persona } from "./Persona";
 
 export class Administrador extends Persona {
+  private id_empresa: string;
+
   constructor(
     id: string,
     nombre: string,
     email: string,
     contraseña: string,
+    id_empresa: string,
     estado: string = "activo",
   ) {
     super(id, nombre, email, contraseña, estado);
+    this.id_empresa = id_empresa;
+  }
+
+  public getIdEmpresa(): string {
+    return this.id_empresa;
+  }
+
+  public setIdEmpresa(id_empresa: string): void {
+    this.id_empresa = id_empresa;
   }
 
   public cancelar(): void {

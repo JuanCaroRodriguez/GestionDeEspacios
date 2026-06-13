@@ -74,7 +74,7 @@ export class AdministradorController {
   // POST - Crear nuevo administrador
   async create(req: Request, res: Response) {
     try {
-      const { id, nombre, email, contraseña } = req.body;
+      const { id, nombre, email, contraseña, id_empresa } = req.body;
 
       if (!id || !nombre || !email || !contraseña) {
         return res.status(400).json({ error: "Faltan campos obligatorios" });
@@ -103,6 +103,7 @@ export class AdministradorController {
         nombre,
         email,
         contraseñaHasheada,
+        id_empresa
       );
 
       const createdAdministrador =
@@ -172,7 +173,7 @@ export class AdministradorController {
       }
 
       const { Administrador } = await import("../../domain/Administrador");
-      const administrador = new Administrador("temp", "temp", "temp", "temp");
+      const administrador = new Administrador("temp", "temp", "temp", "temp", "temp");
       const resultado = administrador.evaluarSolicitudReservaLaboratorio(
         reservaId,
         solicitante,

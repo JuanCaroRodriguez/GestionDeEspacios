@@ -10,6 +10,8 @@ export class UsuarioRepository implements IUsuarioRepository {
       email: usuario.getEmail(),
       contraseña: usuario.getContraseña(),
       tipo: usuario.getTipo(),
+      estado: usuario.getEstado(),
+      id_empresa: usuario.getIdEmpresa(),
     });
 
     const savedUsuario = await usuarioDoc.save();
@@ -85,6 +87,7 @@ export class UsuarioRepository implements IUsuarioRepository {
       usuarioDoc.contraseña,
       usuarioDoc.tipo,
       usuarioDoc.estado,
+      usuarioDoc.id_empresa,
     );
     return usuario;
   }
