@@ -38,7 +38,10 @@ El Sistema de Gestión de Espacios Universitarios es una aplicación web moderna
 - **Dashboard personalizado** según el tipo de usuario
 - **Estadísticas en tiempo real** de reservas y ocupación
 - **Evaluación de solicitudes** con aprobación/rechazo
-- **Reportes y métricas** de utilización
+- **Reportes y métricas** de utilización con gráficas interactivas
+- **Análisis de ocupación** por tipo de espacio y período
+- **Tendencias mensuales** de uso de espacios físicos
+- **Exportación de datos** a CSV para análisis externo
 
 ---
 
@@ -101,6 +104,18 @@ El Sistema de Gestión de Espacios Universitarios es una aplicación web moderna
 - Estadísticas de ocupación
 - Reportes de utilización
 
+### **Reportes de Uso**
+
+- **Dashboard de análisis** con gráficas interactivas (barras, líneas, pastel)
+- **Filtros avanzados** por fecha, tipo de espacio, estado y bloque
+- **Estadísticas clave**: total de espacios, reservas, ocupación promedio
+- **Análisis por estado**: distribución de reservas (Pendiente, Reservada, Ejecutada, Cancelada)
+- **Análisis por tipo**: uso comparativo entre aulas, laboratorios, oficinas y otros espacios
+- **Espacios más utilizados**: ranking de los 10 espacios con mayor demanda
+- **Tendencias mensuales**: evolución del uso de espacios a lo largo del tiempo
+- **Exportación a CSV**: descarga de datos filtrados para análisis externo
+- **Acceso restringido**: disponible solo para administradores y super administradores
+
 ---
 
 ## [Flujo de Trabajo]
@@ -118,15 +133,17 @@ El Sistema de Gestión de Espacios Universitarios es una aplicación web moderna
 1. **Evaluación de solicitudes** pendientes
 2. **Aprobación o rechazo** de reservas
 3. **Monitoreo de ocupación** de espacios
-4. **Generación de reportes** de utilización
-5. **Configuración de espacios** y disponibilidad
+4. **Generación de reportes** de utilización con filtros y gráficas
+5. **Análisis de tendencias** y espacios más demandados
+6. **Configuración de espacios** y disponibilidad
 
 ### **Para Super Administradores**
 
 1. **Gestión de empresas** y usuarios
 2. **Configuración global** del sistema
 3. **Supervisión general** de operaciones
-4. **Mantenimiento de la plataforma**
+4. **Generación de reportes globales** de uso del sistema
+5. **Mantenimiento de la plataforma**
 
 ---
 
@@ -213,7 +230,7 @@ npm run dev
 - Laboratorios informáticos
 - Auditorios y salas de conferencia
 - Espacios de estudio grupal
-- Instalaciones deportivas
+- Oficinas administrativas
 
 ---
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import useSession from '../context/Auth/useSession';
 import reservasService from '@api/services/reservas.service';
-import { FiCalendar, FiClock, FiUser, FiCheck, FiX, FiAlertCircle } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiUser, FiCheck, FiX, FiAlertCircle, FiAlertTriangle, FiFilter, FiRefreshCw, FiSearch, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { toast } from 'sonner';
 
 const EvaluarReservas = () => {
@@ -11,6 +11,20 @@ const EvaluarReservas = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [loadingAction, setLoadingAction] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Filtros
+    const [filtroEstado, setFiltroEstado] = useState('');
+    const [filtroTipo, setFiltroTipo] = useState('');
+    const [filtroFechaInicio, setFiltroFechaInicio] = useState('');
+    const [filtroFechaFin, setFiltroFechaFin] = useState('');
+    const [filtroEspacio, setFiltroEspacio] = useState('');
+    const [filtroPersona, setFiltroPersona] = useState('');
+    const [filtrosVisibles, setFiltrosVisibles] = useState(true);
+    const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
+    const [reservaIdToCancel, setReservaIdToCancel] = useState(null);
+    const [cancelando, setCancelando] = useState(false);
 
     useEffect(() => {
         cargarReservas();
@@ -27,7 +41,8 @@ const EvaluarReservas = () => {
             setLoading(true);
             setError(null);
             const todasReservas = await reservasService.getAllByEmpresa(session.user.id_empresa);
-            setReservas(todasReservas);
+            setReservas(todasReservas.reverse());
+            setCurrentPage(1);
         } catch (error) {
             console.error('Error al cargar reservas:', error);
             setError('Error al cargar las reservas');
@@ -64,6 +79,36 @@ const EvaluarReservas = () => {
         }
     };
 
+    const handleCancelar = (reservaId) => {
+        setReservaIdToCancel(reservaId);
+        setModalCancelarOpen(true);
+    };
+
+    const confirmarCancelar = async () => {
+        if (!reservaIdToCancel) return;
+        try {
+            setCancelando(true);
+            setLoadingAction(reservaIdToCancel);
+            await reservasService.updateEstado(reservaIdToCancel, 'Cancelada');
+            toast.success('Reserva cancelada exitosamente');
+            cargarReservas();
+        } catch (error) {
+            console.error('Error al cancelar reserva:', error);
+            toast.error('Error al cancelar la reserva');
+        } finally {
+            setCancelando(false);
+            setLoadingAction(null);
+            setModalCancelarOpen(false);
+            setReservaIdToCancel(null);
+        }
+    };
+
+    const cerrarModalCancelar = () => {
+        if (cancelando) return;
+        setModalCancelarOpen(false);
+        setReservaIdToCancel(null);
+    };
+
     const getEstadoColor = (estado) => {
         switch (estado) {
             case 'Pendiente':
@@ -78,6 +123,50 @@ const EvaluarReservas = () => {
                 return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
+
+    const getReservasFiltradas = () => {
+        return reservas.filter(reserva => {
+            // Filtro por estado
+            if (filtroEstado && reserva.estado !== filtroEstado) return false;
+
+            // Filtro por tipo
+            if (filtroTipo && reserva.tipo !== filtroTipo) return false;
+
+            // Filtro por fecha inicio
+            if (filtroFechaInicio) {
+                const fechaReserva = new Date(reserva.fecha);
+                const fechaInicio = new Date(filtroFechaInicio);
+                if (fechaReserva < fechaInicio) return false;
+            }
+
+            // Filtro por fecha fin
+            if (filtroFechaFin) {
+                const fechaReserva = new Date(reserva.fecha);
+                const fechaFin = new Date(filtroFechaFin);
+                if (fechaReserva > fechaFin) return false;
+            }
+
+            // Filtro por espacio
+            if (filtroEspacio && !reserva.espacioNombre?.toLowerCase().includes(filtroEspacio.toLowerCase())) return false;
+
+            // Filtro por persona
+            if (filtroPersona && !reserva.personaNombre?.toLowerCase().includes(filtroPersona.toLowerCase())) return false;
+
+            return true;
+        });
+    };
+
+    const limpiarFiltros = () => {
+        setFiltroEstado('');
+        setFiltroTipo('');
+        setFiltroFechaInicio('');
+        setFiltroFechaFin('');
+        setFiltroEspacio('');
+        setFiltroPersona('');
+        setCurrentPage(1);
+    };
+
+    const reservasFiltradas = getReservasFiltradas();
 
     const getEstadoIcon = (estado) => {
         switch (estado) {
@@ -96,7 +185,7 @@ const EvaluarReservas = () => {
 
     if (loading) {
         return (
-            <DashboardLayout title="Evaluar Reservas">
+            <DashboardLayout title="Revisión de reservas">
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -109,7 +198,7 @@ const EvaluarReservas = () => {
 
     if (error) {
         return (
-            <DashboardLayout title="Evaluar Reservas">
+            <DashboardLayout title="Revisión de reservas">
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -128,7 +217,7 @@ const EvaluarReservas = () => {
     }
 
     return (
-        <DashboardLayout title="Evaluar Reservas">
+        <DashboardLayout title="Revisión de reservas">
             <div className="p-6">
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
@@ -197,10 +286,114 @@ const EvaluarReservas = () => {
                     </div>
                 </div>
 
+                {/* Filtros */}
+                <div className="bg-white rounded-lg shadow mb-6">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <FiFilter className="w-5 h-5" /> Filtros
+                            </h2>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={limpiarFiltros}
+                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                                >
+                                    <FiRefreshCw className="w-4 h-4 mr-1" /> Limpiar
+                                </button>
+                                <button
+                                    onClick={() => setFiltrosVisibles(prev => !prev)}
+                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                                >
+                                    {filtrosVisibles ? (
+                                        <><FiChevronUp className="w-4 h-4 mr-1" /> Contraer</>
+                                    ) : (
+                                        <><FiChevronDown className="w-4 h-4 mr-1" /> Expandir</>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {filtrosVisibles && (
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                            <select
+                                value={filtroEstado}
+                                onChange={(e) => { setFiltroEstado(e.target.value); setCurrentPage(1); }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Todos</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Reservada">Reservada</option>
+                                <option value="Ejecutada">Ejecutada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                            <select
+                                value={filtroTipo}
+                                onChange={(e) => { setFiltroTipo(e.target.value); setCurrentPage(1); }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Todos</option>
+                                <option value="permanente">Permanente</option>
+                                <option value="ocasional">Ocasional</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
+                            <input
+                                type="date"
+                                value={filtroFechaInicio}
+                                onChange={(e) => { setFiltroFechaInicio(e.target.value); setCurrentPage(1); }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
+                            <input
+                                type="date"
+                                value={filtroFechaFin}
+                                onChange={(e) => { setFiltroFechaFin(e.target.value); setCurrentPage(1); }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Espacio</label>
+                            <div className="relative">
+                                <FiSearch className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar espacio..."
+                                    value={filtroEspacio}
+                                    onChange={(e) => { setFiltroEspacio(e.target.value); setCurrentPage(1); }}
+                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Persona</label>
+                            <div className="relative">
+                                <FiSearch className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar persona..."
+                                    value={filtroPersona}
+                                    onChange={(e) => { setFiltroPersona(e.target.value); setCurrentPage(1); }}
+                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    )}
+                </div>
+
                 {/* Lista de reservas */}
                 <div className="bg-white rounded-lg shadow">
-                    <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-gray-900">Todas las Reservas</h2>
+                        <span className="text-sm text-gray-500">{reservasFiltradas.length} resultado(s)</span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -230,14 +423,16 @@ const EvaluarReservas = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {reservas.length === 0 ? (
+                                {reservasFiltradas.length === 0 ? (
                                     <tr>
                                         <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
                                             No hay reservas registradas
                                         </td>
                                     </tr>
                                 ) : (
-                                    reservas.map((reserva) => (
+                                    reservasFiltradas
+                                        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                        .map((reserva) => (
                                         <tr key={reserva.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900">
@@ -308,6 +503,19 @@ const EvaluarReservas = () => {
                                                             Rechazar
                                                         </button>
                                                     </div>
+                                                ) : reserva.estado === 'Reservada' ? (
+                                                    <button
+                                                        onClick={() => handleCancelar(reserva.id)}
+                                                        disabled={loadingAction === reserva.id || cancelando}
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                                                    >
+                                                        {loadingAction === reserva.id ? (
+                                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                                        ) : (
+                                                            <FiX className="w-3 h-3 mr-1" />
+                                                        )}
+                                                        Cancelar
+                                                    </button>
                                                 ) : (
                                                     <span className="text-sm text-gray-500">
                                                         No requiere acción
@@ -320,8 +528,98 @@ const EvaluarReservas = () => {
                             </tbody>
                         </table>
                     </div>
+                    {/* Controles de paginación */}
+                    {reservasFiltradas.length > itemsPerPage && (
+                        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                            <div className="text-sm text-gray-700">
+                                Mostrando <span className="font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, reservasFiltradas.length)}</span> - <span className="font-medium">{Math.min(currentPage * itemsPerPage, reservasFiltradas.length)}</span> de <span className="font-medium">{reservasFiltradas.length}</span> resultados
+                            </div>
+                            <div className="flex space-x-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Anterior
+                                </button>
+                                {Array.from({ length: Math.ceil(reservasFiltradas.length / itemsPerPage) }, (_, i) => i + 1).map(page => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`px-3 py-1 border rounded text-sm font-medium ${
+                                            currentPage === page
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(reservasFiltradas.length / itemsPerPage)))}
+                                    disabled={currentPage === Math.ceil(reservasFiltradas.length / itemsPerPage)}
+                                    className="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Siguiente
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Modal de confirmación para cancelar reserva */}
+            {modalCancelarOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+                        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                                    <FiAlertTriangle className="w-5 h-5 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">Cancelar reserva</h3>
+                            </div>
+                            <button
+                                onClick={cerrarModalCancelar}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                disabled={cancelando}
+                            >
+                                <FiX className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="px-6 py-5">
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                ¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={cerrarModalCancelar}
+                                disabled={cancelando}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                Volver
+                            </button>
+                            <button
+                                onClick={confirmarCancelar}
+                                disabled={cancelando}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {cancelando ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Cancelando...
+                                    </>
+                                ) : (
+                                    'Sí, cancelar reserva'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 };

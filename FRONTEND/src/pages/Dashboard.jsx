@@ -263,25 +263,6 @@ const Dashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div 
                                 className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                                onClick={() => window.location.href = '/dashboard/evaluar-reservas'}
-                            >
-                                <h2 className="text-xl font-semibold mb-4 flex">
-                                    <FiCalendar  className="w-6 h-6" />
-                                     Evaluar reservas</h2>
-                                <p className="text-gray-600 mb-4">
-                                    Gestión de reservas de los espacios
-                                </p>
-                                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                                    <p className="text-sm text-yellow-800">
-                                        <strong>Pendientes:</strong> {loadingReservas ? 'Cargando...' : `${reservasPendientes} solicitudes esperando aprobación`}
-                                    </p>
-                                </div>
-                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
-                                    Evaluar reservas →
-                                </div>
-                            </div>
-                            <div 
-                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
                                 onClick={() => window.location.href = '/dashboard/consulta-espacios'}
                             >
                                 <h2 className="text-xl font-semibold mb-4 flex">
@@ -298,6 +279,25 @@ const Dashboard = () => {
                                 </div>
                                 <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
                                     Consultar espacios →
+                                </div>
+                            </div>
+                             <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/evaluar-reservas'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex">
+                                    <FiCalendar  className="w-6 h-6" />
+                                     Revisión de reservas</h2>
+                                <p className="text-gray-600 mb-4">
+                                    Gestión de reservas de los espacios
+                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                                    <p className="text-sm text-yellow-800">
+                                        <strong>Pendientes:</strong> {loadingReservas ? 'Cargando...' : `${reservasPendientes} solicitudes esperando aprobación`}
+                                    </p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Revisión de reservas →
                                 </div>
                             </div>
                             <div 
@@ -334,6 +334,18 @@ const Dashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div 
                                 className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/consulta-espacios'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                    <FiSearch className="w-5 h-5" /> Consulta disponibilidad
+                                </h2>
+                                <p className="text-gray-600">Consulta la disponibilidad de espacios</p>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Consultar disponibilidad →
+                                </div>
+                            </div>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
                                 onClick={() => window.location.href = '/dashboard/mis-reservas'}
                             >
                                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -344,18 +356,7 @@ const Dashboard = () => {
                                     Ver mis reservas →
                                 </div>
                             </div>
-                            <div 
-                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                                onClick={() => window.location.href = '/dashboard/consulta-espacios'}
-                            >
-                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                    <IoIosAddCircleOutline className="w-5 h-5" /> Nueva reserva
-                                </h2>
-                                <p className="text-gray-600">Crea una nueva reserva</p>
-                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
-                                    Reservar espacio →
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 );
@@ -454,31 +455,6 @@ const Dashboard = () => {
                     <div className={shouldShowSidebar ? "p-6" : "p-0"}>
                         {renderMainContent()}
                     </div>
-                    
-                    {/* Botón flotante para toggle sidebar */}
-                    {shouldShowSidebar && (
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 z-50 group"
-                            title={sidebarOpen ? 'Contraer barra lateral (Ctrl+B)' : 'Expandir barra lateral (Ctrl+B)'}
-                        >
-                            <svg 
-                                className={`w-6 h-6 transition-all duration-300 ${sidebarOpen ? 'rotate-0' : 'rotate-180'}`}
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                            </svg>
-                            
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full mb-2 right-0 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap">
-                                <div>{sidebarOpen ? 'Contraer barra lateral' : 'Expandir barra lateral'}</div>
-                                <div className="text-xs text-gray-400">Ctrl+B</div>
-                                <div className="absolute top-full right-4 border-4 border-transparent border-t-gray-900"></div>
-                            </div>
-                        </button>
-                    )}
                 </main>
             </div>
         </div>

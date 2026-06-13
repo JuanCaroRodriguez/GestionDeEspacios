@@ -3,6 +3,7 @@ import DashboardLayout from '../components/Layout/DashboardLayout';
 import useSession from '../context/Auth/useSession';
 import reservasService from '../api/services/reservas.service';
 import { toast } from 'sonner';
+import { FiAlertTriangle, FiX } from 'react-icons/fi';
 import './MisReservas.css';
 
 const MisReservas = () => {
@@ -11,6 +12,9 @@ const MisReservas = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
+  const [reservaIdToCancel, setReservaIdToCancel] = useState(null);
+  const [cancelando, setCancelando] = useState(false);
 
   useEffect(() => {
     cargarMisReservas();
@@ -28,15 +32,7 @@ const MisReservas = () => {
       setError(null);
       
       const reservasData = await reservasService.getByPersona(session.user.id);
-      
-      // Ordenar reservas por fecha (más recientes primero)
-      const reservasOrdenadas = reservasData.sort((a, b) => {
-        const fechaA = new Date(a.fecha);
-        const fechaB = new Date(b.fecha);
-        return fechaB - fechaA;
-      });
-      
-      setReservas(reservasOrdenadas);
+      setReservas(reservasData.reverse());
     } catch (error) {
       console.error('Error al cargar mis reservas:', error);
       setError('Error al cargar las reservas');
@@ -46,19 +42,32 @@ const MisReservas = () => {
     }
   };
 
-  const handleCancelarReserva = async (reservaId) => {
-    if (!window.confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
-      return;
-    }
+  const handleCancelarReserva = (reservaId) => {
+    setReservaIdToCancel(reservaId);
+    setModalCancelarOpen(true);
+  };
 
+  const confirmarCancelarReserva = async () => {
+    if (!reservaIdToCancel) return;
     try {
-      await reservasService.cancelReserva(reservaId);
+      setCancelando(true);
+      await reservasService.cancelReserva(reservaIdToCancel);
       toast.success('Reserva cancelada exitosamente');
-      cargarMisReservas(); // Recargar la lista
+      cargarMisReservas();
     } catch (error) {
       console.error('Error al cancelar reserva:', error);
       toast.error('Error al cancelar la reserva');
+    } finally {
+      setCancelando(false);
+      setModalCancelarOpen(false);
+      setReservaIdToCancel(null);
     }
+  };
+
+  const cerrarModalCancelar = () => {
+    if (cancelando) return;
+    setModalCancelarOpen(false);
+    setReservaIdToCancel(null);
   };
 
   const getEstadoBadge = (estado) => {
@@ -235,21 +244,66 @@ const MisReservas = () => {
                           Cancelar
                         </button>
                       )}
-                      {reserva.estado === 'Cancelada' && (
-                        <button
-                          onClick={() => window.location.href = '/dashboard/consulta-espacios'}
-                          className="btn-reservar"
-                          title="Reservar otro espacio"
-                        >
-                          Reservar
-                        </button>
-                      )}
+                     
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Modal de confirmación para cancelar reserva */}
+      {modalCancelarOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <FiAlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Cancelar reserva</h3>
+              </div>
+              <button
+                onClick={cerrarModalCancelar}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                disabled={cancelando}
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                ¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={cerrarModalCancelar}
+                disabled={cancelando}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Volver
+              </button>
+              <button
+                onClick={confirmarCancelarReserva}
+                disabled={cancelando}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {cancelando ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Cancelando...
+                  </>
+                ) : (
+                  'Sí, cancelar reserva'
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
       </div>

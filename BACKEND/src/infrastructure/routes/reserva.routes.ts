@@ -187,8 +187,6 @@ router.post("/", async (req, res) => {
     const inicio = hInicio * 60 + mInicio;
     const fin = hFin * 60 + mFin;
 
-    console.log("Inicio:", inicio, "Fin:", fin);
-
     if (inicio >= fin) {
       return res.status(400).json({
         error: "La hora de inicio debe ser anterior a la hora de fin",
@@ -204,10 +202,6 @@ router.post("/", async (req, res) => {
 
     // Crear fecha local para evitar problemas de timezone
     const fechaLocal = new Date(fecha + "T00:00:00");
-    console.log(
-      "🔍 DEBUG BACKEND - Creando reserva con estado:",
-      estado || "Reservada",
-    );
 
     const reserva = new Reserva(
       id,
@@ -220,11 +214,6 @@ router.post("/", async (req, res) => {
       motivo || "Sin motivo especificado",
       id_empresa,
       estado || "Reservada",
-    );
-
-    console.log(
-      "🔍 DEBUG BACKEND - Reserva creada, estado:",
-      reserva.getEstado(),
     );
 
     const createdReserva = await reservaRepository.create(reserva);
@@ -262,7 +251,6 @@ router.delete("/:id", async (req, res) => {
 
 // GET - Obtener reservas por persona (Mis Reservas)
 router.get("/persona/:personaId", async (req, res) => {
-  console.log("entro");
   try {
     const { personaId } = req.params;
 
@@ -271,9 +259,6 @@ router.get("/persona/:personaId", async (req, res) => {
     }
 
     const reservas = await reservaRepository.findByPersonaId(personaId);
-
-    console.log("🔍 DEBUG BACKEND - Reservas crudas:", reservas);
-    console.log("🔍 DEBUG BACKEND - Primera reserva cruda:", reservas[0]);
 
     // Mapear a formato seguro sin dependencias de persona
     const reservasSeguras = await Promise.all(
@@ -313,12 +298,6 @@ router.get("/persona/:personaId", async (req, res) => {
           fechaFin: reserva.getFechaFin(),
         };
       }),
-    );
-
-    console.log("🔍 DEBUG BACKEND - Reservas mapeadas:", reservasSeguras);
-    console.log(
-      "🔍 DEBUG BACKEND - Primera reserva mapeada:",
-      reservasSeguras[0],
     );
 
     res.json(reservasSeguras);

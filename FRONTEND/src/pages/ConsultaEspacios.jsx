@@ -31,6 +31,7 @@ const ConsultaDisponibilidad = () => {
     const modalRef = useRef(null); // Referencia directa al modal
     const [reservaMotivo, setReservaMotivo] = useState('');
     const [loadingReserva, setLoadingReserva] = useState(false);
+    const creatingRef = useRef(false); // Guarda sincrónica contra doble-click
 
     // Franjas horarias
     const timeSlots = [
@@ -157,6 +158,33 @@ const ConsultaDisponibilidad = () => {
         }
     };
 
+    // Helper: hora actual en Colombia (UTC-5)
+    const ahoraColombia = () => {
+        try {
+            return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+        } catch {
+            return new Date();
+        }
+    };
+
+    // Función para verificar si un slot ya pasó (hora Colombia)
+    const esSlotPasado = (day, slot) => {
+        const d = days.indexOf(day);
+        const fecha = weekDates[d];
+        const { horaInicio } = reservasService.timeSlotToHoras(slot);
+
+        const match = horaInicio.match(/(\d+):(\d+)(AM|PM)/i);
+        if (!match) return false;
+        let h = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        const periodo = match[3].toUpperCase();
+        if (periodo === 'PM' && h !== 12) h += 12;
+        if (periodo === 'AM' && h === 12) h = 0;
+
+        const slotDate = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), h, m);
+        return slotDate < ahoraColombia();
+    };
+
     // Función para verificar si un horario está ocupado
     const estaOcupado = (day, slot) => {
         if (!selectedSpace || reservas.length === 0) {
@@ -180,7 +208,7 @@ const ConsultaDisponibilidad = () => {
 
     // Función para manejar clic en franja disponible
     const handleSlotClick = (day, slot) => {
-        if (!selectedSpace || estaOcupado(day, slot)) return;
+        if (!selectedSpace || estaOcupado(day, slot) || esSlotPasado(day, slot)) return;
 
         const slotKey = `${day}-${slot}`;
         const slotIndex = timeSlots.indexOf(slot);
@@ -409,8 +437,11 @@ const ConsultaDisponibilidad = () => {
         };
         
         window.confirmarModalDirecto = async () => {
-            
-            
+            // Guarda contra doble-click en el modal directo
+            if (creatingRef.current) {
+                return;
+            }
+
             // Obtener el valor del motivo
             const motivoElement = document.getElementById('motivo-directo');
             const motivo = motivoElement ? motivoElement.value : '';
@@ -424,21 +455,8 @@ const ConsultaDisponibilidad = () => {
                 if (tipoElement) {
                     tipoReserva = tipoElement.value;
                 }
-            }
+            } 
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            // PRIMERO validar que tengamos las selecciones guardadas
             const currentSelections = window.currentSelections || {};
             if (!currentSelections.selectedSlots || currentSelections.selectedSlots.length === 0 || !currentSelections.selectedSpace) {
                 alert('Error: No hay franjas seleccionadas o espacio seleccionado. Por favor, selecciona nuevamente.');
@@ -470,32 +488,35 @@ const ConsultaDisponibilidad = () => {
 
     // Función para crear reserva
     const handleReserva = async (motivoDirecto = null, tipoDirecto = null, estadoDirecto = null) => {
-        
-        
+        // Guarda sincrónica: si ya se está creando una reserva, ignorar el click
+        if (creatingRef.current) {
+            return;
+        }
+        creatingRef.current = true;
+
         // Usar los valores directos si se proporcionan, si no usar los estados
         const motivoFinal = motivoDirecto || reservaMotivo;
         const tipoFinal = tipoDirecto || 'ocasional';
         const estadoFinal = estadoDirecto || 'Reservada';
-        
+
         if (!motivoFinal.trim()) {
-            
+            creatingRef.current = false;
             alert('Error: Debes ingresar un motivo');
             return;
         }
-        
+
         if (selectedSlots.length === 0) {
-            
+            creatingRef.current = false;
             alert('Error: Debes seleccionar al menos una franja horaria');
             return;
         }
-        
+
         if (!selectedSpace) {
-            
+            creatingRef.current = false;
             alert('Error: No hay espacio seleccionado');
             return;
         }
 
-        
         setLoadingReserva(true);
         
         try {
@@ -594,6 +615,7 @@ const ConsultaDisponibilidad = () => {
             toast.error('No se pudo crear la reserva');
         } finally {
             setLoadingReserva(false);
+            creatingRef.current = false;
         }
     };
 
@@ -1036,9 +1058,10 @@ const ConsultaDisponibilidad = () => {
                                         </td>
                                         {days.map((day, dayIndex) => {
                                             const ocupado = estaOcupado(day, slot);
+                                            const pasado = esSlotPasado(day, slot);
                                             const reservaInfo = getReservaInfo(day, slot);
                                             const seleccionado = isSlotSelected(day, slot);
-                                            
+
                                             return (
                                                 <td key={`${dayIndex}-${slotIndex}`} className="px-2 py-2 text-center border">
                                                     {ocupado ? (
@@ -1058,15 +1081,19 @@ const ConsultaDisponibilidad = () => {
                                                                 </div>
                                                             )}
                                                         </div>
+                                                    ) : pasado ? (
+                                                        <div className="w-full h-8 bg-gray-100 rounded flex items-center justify-center cursor-not-allowed">
+                                                            <span className="text-xs text-gray-400">No disponible</span>
+                                                        </div>
                                                     ) : seleccionado ? (
-                                                        <div 
+                                                        <div
                                                             onClick={() => handleSlotClick(day, slot)}
                                                             className="w-full h-8 bg-blue-500 rounded hover:bg-blue-600 cursor-pointer transition-colors flex items-center justify-center"
                                                         >
                                                             <span className="text-xs text-white font-medium">Seleccionado</span>
                                                         </div>
                                                     ) : (
-                                                        <div 
+                                                        <div
                                                             onClick={() => handleSlotClick(day, slot)}
                                                             className="w-full h-8 bg-green-100 rounded hover:bg-green-200 cursor-pointer transition-colors flex items-center justify-center"
                                                         >

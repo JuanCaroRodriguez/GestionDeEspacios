@@ -48,7 +48,7 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
                 description: 'Consultar horarios y disponibilidad'
             },
             {
-                title: 'Evaluar reservas',
+                title: 'Revisión de reservas',
                 icon: <FiCalendar className="w-5 h-5" />,
                 path: '/dashboard/evaluar-reservas',
                 description: 'Gestión de reservas de los espacios'

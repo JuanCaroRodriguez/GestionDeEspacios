@@ -3,6 +3,8 @@ import { Reserva } from "../../domain/Reserva";
 import { Usuario } from "../../domain/Usuario";
 import { ReservaModel, IReserva } from "../models/Reserva.model";
 import { UsuarioModel } from "../models/Usuario.model";
+import { AdministradorModel } from "../models/Administrador.model";
+import { SuperAdminModel } from "../models/SuperAdmin.model";
 
 export class ReservaRepository implements IReservaRepository {
   async create(reserva: Reserva): Promise<Reserva> {
@@ -151,7 +153,7 @@ export class ReservaRepository implements IReservaRepository {
       id_empresa,
     });
     return await Promise.all(
-      reservas.map((reserva) => this.mapToEntityWithoutPersona(reserva)),
+      reservas.map((reserva) => this.mapToEntity(reserva)),
     );
   }
 
@@ -186,8 +188,22 @@ export class ReservaRepository implements IReservaRepository {
   }
 
   private async mapToEntity(reservaDoc: IReserva): Promise<Reserva> {
-    // Buscar la persona
-    const personaDoc = await UsuarioModel.findOne({ id: reservaDoc.personaId });
+    // Buscar la persona en las 3 colecciones posibles
+    let personaDoc = await UsuarioModel.findOne({ id: reservaDoc.personaId });
+    let tipoPersona = "estudiante";
+
+    if (!personaDoc) {
+      personaDoc = await AdministradorModel.findOne({
+        id: reservaDoc.personaId,
+      });
+      tipoPersona = "administrador";
+    }
+
+    if (!personaDoc) {
+      personaDoc = await SuperAdminModel.findOne({ id: reservaDoc.personaId });
+      tipoPersona = "superadmin";
+    }
+
     if (!personaDoc) {
       throw new Error(`Persona no encontrada con ID: ${reservaDoc.personaId}`);
     }
@@ -196,8 +212,8 @@ export class ReservaRepository implements IReservaRepository {
       personaDoc.id,
       personaDoc.nombre,
       personaDoc.email,
-      personaDoc.contraseña,
-      personaDoc.tipo,
+      personaDoc.contraseña || "",
+      tipoPersona as "estudiante" | "docente",
     );
 
     const reserva = new Reserva(
@@ -214,7 +230,11 @@ export class ReservaRepository implements IReservaRepository {
 
     // Establecer el estado
     reserva.setEstado(
-      reservaDoc.estado as "Reservada" | "Ejecutada" | "Cancelada",
+      reservaDoc.estado as
+        | "Reservada"
+        | "Ejecutada"
+        | "Cancelada"
+        | "Pendiente",
     );
 
     return reserva;
