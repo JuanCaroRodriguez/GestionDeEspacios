@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@tools/CONSTANTS';
-import { FiSearch, FiHome, FiUsers, FiUserPlus, FiCalendar, FiLogOut } from 'react-icons/fi';
+import { FiSearch, FiHome, FiUsers, FiUserPlus, FiCalendar, FiLogOut, FiBarChart2 } from 'react-icons/fi';
 import Logo from '../../assets/LogoIsoft.png';
 
 
@@ -32,6 +32,12 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
                 icon: <FiUserPlus className="w-5 h-5" />,
                 path: '/dashboard/administradores',
                 description: 'Administrar administradores del sistema'
+            },
+            {
+                title: 'Reportes de uso',
+                icon: <FiBarChart2 className="w-5 h-5" />,
+                path: '/dashboard/reportes-uso',
+                description: 'Estadísticas y análisis de uso'
             }
         ],
         administrador: [
@@ -46,6 +52,12 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
                 icon: <FiCalendar className="w-5 h-5" />,
                 path: '/dashboard/evaluar-reservas',
                 description: 'Gestión de reservas de los espacios'
+            },
+            {
+                title: 'Reportes de uso',
+                icon: <FiBarChart2 className="w-5 h-5" />,
+                path: '/dashboard/reportes-uso',
+                description: 'Estadísticas y análisis de uso'
             }
         ],
         estudiante: [

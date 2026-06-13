@@ -4,7 +4,7 @@ import useSession from '@context/Auth/useSession';
 import CrearEmpresa from '@components/Empresa/CrearEmpresa';
 import empresasService from '@api/services/empresas.service';
 import reservasService from '@api/services/reservas.service';
-import { FiCalendar ,FiTrello, FiSearch, FiHome, FiUsers, FiUserPlus } from 'react-icons/fi';
+import { FiCalendar ,FiTrello, FiSearch, FiHome, FiUsers, FiUserPlus, FiBarChart2 } from 'react-icons/fi';
 import { IoIosAddCircleOutline } from "react-icons/io";
 
 
@@ -230,6 +230,26 @@ const Dashboard = () => {
                                     Gestionar administradores →
                                 </div>
                             </div>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/reportes-uso'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <FiBarChart2 className="w-6 h-6" /> Reportes de uso
+                            </h2>
+                                <p className="text-gray-600 mb-4">
+                                    Estadísticas y análisis de uso de espacios.
+                                </p>
+                                <div className="space-y-2 text-sm text-gray-500">
+                                    <p>• Análisis de ocupación</p>
+                                    <p>• Estadísticas por tipo</p>
+                                    <p>• Tendencias mensuales</p>
+                                    <p>• Espacios más utilizados</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Ver reportes →
+                                </div>
+                            </div>
                         </div>
                     </div>
                 );
@@ -278,6 +298,26 @@ const Dashboard = () => {
                                 </div>
                                 <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
                                     Consultar espacios →
+                                </div>
+                            </div>
+                            <div 
+                                className="bg-white p-6 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                                onClick={() => window.location.href = '/dashboard/reportes-uso'}
+                            >
+                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                <FiBarChart2 className="w-6 h-6" /> Reportes de uso
+                            </h2>
+                                <p className="text-gray-600 mb-4">
+                                    Estadísticas y análisis de uso de espacios.
+                                </p>
+                                <div className="space-y-2 text-sm text-gray-500">
+                                    <p>• Análisis de ocupación</p>
+                                    <p>• Estadísticas por tipo</p>
+                                    <p>• Tendencias mensuales</p>
+                                    <p>• Espacios más utilizados</p>
+                                </div>
+                                <div className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                    Ver reportes →
                                 </div>
                             </div>
                         </div>

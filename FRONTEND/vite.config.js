@@ -24,4 +24,7 @@ export default defineConfig({
     port: 5174,
     host: true,
   },
+  optimizeDeps: {
+    include: ["recharts", "react-is"],
+  },
 });

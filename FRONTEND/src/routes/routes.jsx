@@ -16,6 +16,7 @@ const componentMap = {
   "GestionUsuarios": () => import("../pages/GestionUsuarios"),
   "GestionAdministradores": () => import("../pages/GestionAdministradores"),
   "EvaluarReservas": () => import("../pages/EvaluarReservas"),
+  "ReportesUso": () => import("../pages/ReportesUso"),
   "Inicio": () => import("../pages/Inicio"),
   "Perfil": () => import("../pages/Perfil"),
   "Error404": () => import("../pages/Error404"),
@@ -68,6 +69,10 @@ const router = [
       {
         path: "/dashboard/evaluar-reservas",
         element: <LoadComponent component="EvaluarReservas" componentsMap={componentMap} loading={<></>} />,
+      },
+      {
+        path: "/dashboard/reportes-uso",
+        element: <LoadComponent component="ReportesUso" componentsMap={componentMap} loading={<></>} />,
       },
       {
         path: ROUTES.errors.notFound,
