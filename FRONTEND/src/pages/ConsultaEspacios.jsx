@@ -149,7 +149,7 @@ const ConsultaDisponibilidad = () => {
             
             setReservas(reservasEspacio);
         } catch (error) {
-            console.error('❌ Error al cargar reservas:', error);
+            console.error(' Error al cargar reservas:', error);
             setReservasError('No se pudieron cargar las reservas existentes');
             toast.error('Error al cargar las reservas');
         } finally {
@@ -459,7 +459,7 @@ const ConsultaDisponibilidad = () => {
                 
                 window.cerrarModalDirecto();
             } catch (error) {
-                console.error('❌ ERROR EN RESERVA:', error);
+                console.error(' ERROR EN RESERVA:', error);
                 alert('Error al crear la reserva: ' + error.message);
                 // No cerrar el modal si hay error para que pueda reintentar
             }

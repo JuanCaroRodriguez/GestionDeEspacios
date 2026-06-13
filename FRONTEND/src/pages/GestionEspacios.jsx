@@ -1617,7 +1617,7 @@ const GestionEspacios = () => {
 
                                         <p className="text-xs text-gray-500 mt-1">
 
-                                            💡 Espacios existentes en este piso: {getEspaciosExistentesEnPiso().join(', ') || 'Ninguno'}
+                                            Espacios existentes en este piso: {getEspaciosExistentesEnPiso().join(', ') || 'Ninguno'}
 
                                         </p>
 

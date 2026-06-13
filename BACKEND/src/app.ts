@@ -54,13 +54,13 @@ async function startServer() {
     await dbConnection.connect();
 
     app.listen(port, () => {
-      console.log(`🚀 Servidor funcionando en puerto ${port}`);
+      console.log(` Servidor funcionando en puerto ${port}`);
       console.log(
-        `📚 Documentación de la API: http://localhost:${port}/api/health`,
+        ` Documentación de la API: http://localhost:${port}/api/health`,
       );
     });
   } catch (error) {
-    console.error("❌ Error al iniciar el servidor:", error);
+    console.error(" Error al iniciar el servidor:", error);
     process.exit(1);
   }
 }

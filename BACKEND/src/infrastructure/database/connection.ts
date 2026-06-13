@@ -30,28 +30,28 @@ export class DatabaseConnection {
       });
 
       this.isConnected = true;
-      console.log("✅ Database connected successfully");
+      console.log(" Database connected successfully");
 
       // Handle connection events
       mongoose.connection.on("error", (error) => {
-        console.error("❌ Database connection error:", error);
+        console.error(" Database connection error:", error);
       });
 
       mongoose.connection.on("disconnected", () => {
-        console.log("⚠️ Database disconnected");
+        console.log(" Database disconnected");
         this.isConnected = false;
       });
 
       mongoose.connection.on("reconnected", () => {
-        console.log("✅ Database reconnected");
+        console.log(" Database reconnected");
         this.isConnected = true;
       });
     } catch (error) {
       console.warn(
-        "⚠️ Database connection failed, running in mock mode:",
+        " Database connection failed, running in mock mode:",
         error,
       );
-      console.log("🔄 Server will run without database persistence");
+      console.log(" Server will run without database persistence");
       this.isConnected = false;
       // Don't throw error, allow server to run without database
     }
@@ -65,9 +65,9 @@ export class DatabaseConnection {
     try {
       await mongoose.disconnect();
       this.isConnected = false;
-      console.log("✅ Database disconnected successfully");
+      console.log(" Database disconnected successfully");
     } catch (error) {
-      console.error("❌ Error disconnecting from database:", error);
+      console.error(" Error disconnecting from database:", error);
       throw error;
     }
   }

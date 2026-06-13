@@ -54,11 +54,11 @@ export class Administrador extends Persona {
     );
 
     if (criteriosAceptacion.aceptada) {
-      console.log(`✅ Solicitud ${reservaId} ACEPTADA para ${solicitante}`);
+      console.log(` Solicitud ${reservaId} ACEPTADA para ${solicitante}`);
       console.log(`   Razón: ${criteriosAceptacion.razon}`);
       return { aceptada: true, razon: criteriosAceptacion.razon };
     } else {
-      console.log(`❌ Solicitud ${reservaId} RECHAZADA para ${solicitante}`);
+      console.log(` Solicitud ${reservaId} RECHAZADA para ${solicitante}`);
       console.log(`   Razón: ${criteriosAceptacion.razon}`);
       return { aceptada: false, razon: criteriosAceptacion.razon };
     }

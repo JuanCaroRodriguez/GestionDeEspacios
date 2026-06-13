@@ -291,10 +291,10 @@ const GestionAdministradores = () => {
 
     const getEstadoIcon = (estado) => {
         switch(estado) {
-            case 'activo': return '✅';
-            case 'inactivo': return '🔴';
-            case 'suspendido': return '⚠️';
-            default: return '❓';
+            case 'activo': return '';
+            case 'inactivo': return '';
+            case 'suspendido': return '';
+            default: return '';
         }
     };
 

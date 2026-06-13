@@ -442,7 +442,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                 {/* Indicadores de paso */}
                 <div className="flex items-center justify-center mb-8">
                     <div className="flex items-center">
-                        <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium">✓</div>
+                        <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium"></div>
                         <div className="w-16 h-1 bg-blue-600"></div>
                         <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">2</div>
                     </div>
@@ -517,7 +517,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                                 className="text-red-500 hover:text-red-700 text-xs font-medium"
                                                 title="Eliminar bloque"
                                             >
-                                                🗑️ Eliminar
+                                                Eliminar
                                             </button>
                                         </div>
                                     </div>
