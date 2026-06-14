@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import routes from "./infrastructure/routes";
 import { DatabaseConnection } from "./infrastructure/database/connection";
+import { iniciarSchedulerReservas } from "./infrastructure/scheduler/reservaScheduler";
 
 console.clear();
 const app = express();
@@ -52,6 +53,9 @@ async function startServer() {
   try {
     const dbConnection = DatabaseConnection.getInstance();
     await dbConnection.connect();
+
+    // Iniciar worker que marca reservas pasadas como Ejecutada
+    iniciarSchedulerReservas();
 
     app.listen(port, () => {
       console.log(` Servidor funcionando en puerto ${port}`);
