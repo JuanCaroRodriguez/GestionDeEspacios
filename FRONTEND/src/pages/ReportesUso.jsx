@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import espaciosService from '@api/services/espacios.service';
 import reservasService from '@api/services/reservas.service';
+import bloquesService from '@api/services/bloques.service';
 import useSession from '../context/Auth/useSession';
 import { toast } from 'sonner';
 import { FiBarChart2, FiCalendar, FiFilter, FiDownload, FiRefreshCw, FiPieChart, FiTrendingUp, FiUsers, FiHome } from 'react-icons/fi';
@@ -13,6 +14,7 @@ const ReportesUso = () => {
     const [error, setError] = useState(null);
     const [espacios, setEspacios] = useState([]);
     const [reservas, setReservas] = useState([]);
+    const [bloques, setBloques] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     
     // Filtros
@@ -55,14 +57,16 @@ const ReportesUso = () => {
                 return;
             }
 
-            // Cargar espacios y reservas en paralelo
-            const [espaciosData, reservasData] = await Promise.all([
+            // Cargar espacios, reservas y bloques en paralelo
+            const [espaciosData, reservasData, bloquesData] = await Promise.all([
                 espaciosService.getByEmpresa(idEmpresa),
-                reservasService.getAllByEmpresa(idEmpresa)
+                reservasService.getAllByEmpresa(idEmpresa),
+                bloquesService.getByIdEmpresa(idEmpresa)
             ]);
 
             setEspacios(espaciosData);
             setReservas(reservasData);
+            setBloques(bloquesData);
             
         } catch (err) {
             console.error('Error al cargar datos:', err);
@@ -331,9 +335,13 @@ const ReportesUso = () => {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="todos">Todos</option>
-                                {[...new Set(espacios.map(e => e.bloque))].map(bloque => (
-                                    <option key={bloque} value={bloque}>{bloque}</option>
-                                ))}
+                                {[...new Set(espacios.map(e => e.bloque))].map(bloqueId => {
+                                    const bloque = bloques.find(b => b.id === bloqueId || b._id === bloqueId);
+                                    const nombre = bloque?.nombre || bloqueId;
+                                    return (
+                                        <option key={bloqueId} value={bloqueId}>{nombre}</option>
+                                    );
+                                })}
                             </select>
                         </div>
                     </div>

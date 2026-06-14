@@ -238,7 +238,7 @@ const Dashboard = () => {
                                 <FiBarChart2 className="w-6 h-6" /> Reportes de uso
                             </h2>
                                 <p className="text-gray-600 mb-4">
-                                    Estadísticas y análisis de uso de espacios.
+                                    Estadísticas y análisis de uso de los espacios de espacios.
                                 </p>
                                 <div className="space-y-2 text-sm text-gray-500">
                                     <p>• Análisis de ocupación</p>
@@ -308,7 +308,7 @@ const Dashboard = () => {
                                 <FiBarChart2 className="w-6 h-6" /> Reportes de uso
                             </h2>
                                 <p className="text-gray-600 mb-4">
-                                    Estadísticas y análisis de uso de espacios.
+                                    Estadísticas y análisis de uso de los espacios de espacios.
                                 </p>
                                 <div className="space-y-2 text-sm text-gray-500">
                                     <p>• Análisis de ocupación</p>

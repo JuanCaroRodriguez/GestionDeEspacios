@@ -37,7 +37,7 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
                 title: 'Reportes de uso',
                 icon: <FiBarChart2 className="w-5 h-5" />,
                 path: '/dashboard/reportes-uso',
-                description: 'Estadísticas y análisis de uso'
+                description: 'Estadísticas y análisis de uso de los espacios'
             }
         ],
         administrador: [
@@ -57,7 +57,7 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
                 title: 'Reportes de uso',
                 icon: <FiBarChart2 className="w-5 h-5" />,
                 path: '/dashboard/reportes-uso',
-                description: 'Estadísticas y análisis de uso'
+                description: 'Estadísticas y análisis de uso de los espacios'
             }
         ],
         estudiante: [
