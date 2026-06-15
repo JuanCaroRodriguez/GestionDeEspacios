@@ -3,7 +3,9 @@ import { ReservaModel } from "../models/Reserva.model";
 
 function ahoraColombia(): Date {
   try {
-    return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+    return new Date(
+      new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }),
+    );
   } catch {
     return new Date();
   }
@@ -12,12 +14,36 @@ function ahoraColombia(): Date {
 async function marcarReservasEjecutadas(): Promise<void> {
   try {
     const ahora = ahoraColombia();
-    const resultado = await ReservaModel.updateMany(
-      { estado: "Reservada", fechaFin: { $lte: ahora } },
+    console.log(`[Scheduler] Hora actual Bogotá: ${ahora.toISOString()}`);
+
+    // Marcar reservas ocasionales como Ejecutadas
+    const resultadoEjecutadas = await ReservaModel.updateMany(
+      {
+        estado: "Reservada",
+        tipo: "ocasional",
+        fechaFin: { $lte: ahora },
+      },
       { $set: { estado: "Ejecutada" } },
     );
-    if (resultado.modifiedCount > 0) {
-      console.log(`[Scheduler] ${resultado.modifiedCount} reserva(s) marcada(s) como Ejecutada`);
+    if (resultadoEjecutadas.modifiedCount > 0) {
+      console.log(
+        `[Scheduler] ${resultadoEjecutadas.modifiedCount} reserva(s) marcada(s) como Ejecutada`,
+      );
+    }
+
+    // Cancelar reservas pendientes vencidas
+    const resultadoCanceladas = await ReservaModel.updateMany(
+      {
+        estado: "Pendiente",
+        tipo: "ocasional",
+        fechaFin: { $lte: ahora },
+      },
+      { $set: { estado: "Cancelada" } },
+    );
+    if (resultadoCanceladas.modifiedCount > 0) {
+      console.log(
+        `[Scheduler] ${resultadoCanceladas.modifiedCount} reserva(s) pendiente(s) marcada(s) como Cancelada`,
+      );
     }
   } catch (error) {
     console.error("[Scheduler] Error al marcar reservas ejecutadas:", error);
@@ -33,5 +59,7 @@ export function iniciarSchedulerReservas(): void {
     marcarReservasEjecutadas();
   });
 
-  console.log("[Scheduler] Worker de reservas iniciado (inmediato + cada hora)");
+  console.log(
+    "[Scheduler] Worker de reservas iniciado (inmediato + cada hora)",
+  );
 }
