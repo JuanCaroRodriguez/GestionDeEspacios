@@ -202,28 +202,10 @@ const Dashboard = () => {
       // Si no tiene empresa, mostrar SOLO el formulario de creación
       if (!empresa) {
         return (
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-4xl">
-              {/* Botón de cerrar sesión */}
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={() => {
-                    localStorage.removeItem("session");
-                    window.location.href = "/auth";
-                  }}
-                  className="px-4 py-2 text-red-600 hover:text-red-800 text-sm font-medium"
-                >
-                  Cerrar sesión
-                </button>
-              </div>
-
-              {/* Formulario de creación de empresa */}
-              <CrearEmpresa
-                onEmpresaCreada={handleEmpresaCreada}
-                fullscreen={true}
-              />
-            </div>
-          </div>
+          <CrearEmpresa
+            onEmpresaCreada={handleEmpresaCreada}
+            fullscreen={true}
+          />
         );
       }
     }

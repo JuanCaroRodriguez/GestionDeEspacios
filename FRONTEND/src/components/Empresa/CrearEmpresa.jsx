@@ -317,18 +317,26 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
     // Renderizar paso 1: Datos de la empresa
     if (paso === 1) {
         return (
-            <div className={fullscreen ? "min-h-screen bg-gray-50 flex items-center justify-center p-4" : ""}>
+            <div style={fullscreen ? { minHeight: '100vh', background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', position: 'relative', overflow: 'hidden' } : {}}>
                 <style>{`
-                    /* Ocultar flechas de inputs tipo number */
+                    @keyframes ceFloat1 { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-30px) scale(1.05); } }
+                    @keyframes ceFloat2 { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(25px) scale(0.95); } }
+                    @keyframes ceFloat3 { 0%, 100% { transform: translateX(0px) translateY(0px); } 33% { transform: translateX(15px) translateY(-20px); } 66% { transform: translateX(-10px) translateY(10px); } }
+                    @keyframes ceShimmer { 0% { opacity: 0.3; } 50% { opacity: 0.7; } 100% { opacity: 0.3; } }
                     input[type=number]::-webkit-inner-spin-button,
-                    input[type=number]::-webkit-outer-spin-button {
-                        -webkit-appearance: none;
-                        margin: 0;
-                    }
-                    input[type=number] {
-                        -moz-appearance: textfield;
-                    }
+                    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+                    input[type=number] { -moz-appearance: textfield; }
                 `}</style>
+                {fullscreen && (
+                    <>
+                        <div style={{ position: 'absolute', top: '-80px', left: '-80px', width: '350px', height: '350px', borderRadius: '50%', background: 'rgba(96,165,250,0.15)', animation: 'ceFloat1 7s ease-in-out infinite', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(147,197,253,0.12)', animation: 'ceFloat2 9s ease-in-out infinite', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', top: '40%', right: '5%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(59,130,246,0.18)', animation: 'ceFloat3 11s ease-in-out infinite', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', bottom: '15%', left: '8%', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(191,219,254,0.1)', animation: 'ceFloat1 6s ease-in-out infinite 2s', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', top: '12%', right: '20%', width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)', animation: 'ceShimmer 4s ease-in-out infinite', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', top: '30%', left: '15%', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(147,197,253,0.15)', animation: 'ceFloat2 8s ease-in-out infinite 1s', pointerEvents: 'none' }} />
+                    </>
+                )}
                 <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
                     {/* Indicadores de paso */}
                     <div className="flex items-center justify-center mb-8">
@@ -426,18 +434,22 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
     // Renderizar paso 2: Crear bloques
     return (
         <>
-            <div className={fullscreen ? "min-h-screen bg-gray-50 flex items-center justify-center p-4" : ""}>
+            <div style={fullscreen ? { minHeight: '100vh', background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem', position: 'relative', overflow: 'hidden' } : {}}>
             <style>{`
-                /* Ocultar flechas de inputs tipo number */
                 input[type=number]::-webkit-inner-spin-button,
-                input[type=number]::-webkit-outer-spin-button {
-                    -webkit-appearance: none;
-                    margin: 0;
-                }
-                input[type=number] {
-                    -moz-appearance: textfield;
-                }
+                input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+                input[type=number] { -moz-appearance: textfield; }
             `}</style>
+            {fullscreen && (
+                <>
+                    <div style={{ position: 'absolute', top: '-80px', left: '-80px', width: '350px', height: '350px', borderRadius: '50%', background: 'rgba(96,165,250,0.15)', animation: 'ceFloat1 7s ease-in-out infinite', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(147,197,253,0.12)', animation: 'ceFloat2 9s ease-in-out infinite', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', top: '40%', right: '5%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(59,130,246,0.18)', animation: 'ceFloat3 11s ease-in-out infinite', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', bottom: '15%', left: '8%', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(191,219,254,0.1)', animation: 'ceFloat1 6s ease-in-out infinite 2s', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', top: '12%', right: '20%', width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)', animation: 'ceShimmer 4s ease-in-out infinite', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', top: '30%', left: '15%', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(147,197,253,0.15)', animation: 'ceFloat2 8s ease-in-out infinite 1s', pointerEvents: 'none' }} />
+                </>
+            )}
             <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl">
                 {/* Indicadores de paso */}
                 <div className="flex items-center justify-center mb-8">

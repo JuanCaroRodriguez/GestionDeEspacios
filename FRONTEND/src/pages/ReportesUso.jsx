@@ -253,11 +253,65 @@ const ReportesUso = () => {
                 doc.addImage(img, 'PNG', x, yp, w, h);
             };
 
+            // === PIE CHART MANUAL DRAW (html2canvas no captura SVG text) ===
+            const drawPieCanvas = (data, colors, title) => {
+                const W = 620, H = 400;
+                const canvas = document.createElement('canvas');
+                canvas.width = W; canvas.height = H;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+
+                ctx.fillStyle = '#111827'; ctx.font = 'bold 18px sans-serif';
+                ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                ctx.fillText(title, 20, 18);
+
+                const total = data.reduce((s, d) => s + d.value, 0);
+                if (total === 0) return canvas.toDataURL('image/png');
+
+                const cx = W / 2, cy = H / 2 + 10, r = 120;
+                let startAngle = -Math.PI / 2;
+
+                data.forEach((item, i) => {
+                    const slice = (item.value / total) * 2 * Math.PI;
+                    const endAngle = startAngle + slice;
+                    const mid = startAngle + slice / 2;
+
+                    // Slice
+                    ctx.beginPath(); ctx.moveTo(cx, cy);
+                    ctx.arc(cx, cy, r, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[i % colors.length]; ctx.fill();
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+
+                    // Label line
+                    const lsr = r + 10, ler = r + 38;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + lsr * Math.cos(mid), cy + lsr * Math.sin(mid));
+                    ctx.lineTo(cx + ler * Math.cos(mid), cy + ler * Math.sin(mid));
+                    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
+
+                    // Label text
+                    const lx = cx + (r + 50) * Math.cos(mid);
+                    const ly = cy + (r + 50) * Math.sin(mid);
+                    const pct = ((item.value / total) * 100).toFixed(0);
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.font = '500 13px sans-serif';
+                    ctx.textAlign = lx > cx ? 'left' : 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${item.name} ${pct}%`, lx, ly);
+
+                    startAngle = endAngle;
+                });
+                return canvas.toDataURL('image/png');
+            };
+
             // === 4 CHARTS 2×2 ===
             const chartH = Math.floor((pH - mg - y - 4) / 2);
             const halfWV = (cW - 4) / 2;
-            const [imgE, imgT, imgEsp, imgTend] = await Promise.all([
-                capV('chart-estado'), capV('chart-tipo'), capV('chart-espacios'), capV('chart-tendencias')
+            const pieColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+            const imgE = drawPieCanvas(datosEstado, pieColors, 'Reservas por Estado');
+            const [imgT, imgEsp, imgTend] = await Promise.all([
+                capV('chart-tipo'), capV('chart-espacios'), capV('chart-tendencias')
             ]);
             if (imgE)    boxV(imgE,    mg,             y,            halfWV, chartH);
             if (imgT)    boxV(imgT,    mg+halfWV+4,    y,            halfWV, chartH);
@@ -650,9 +704,27 @@ const ReportesUso = () => {
                                     data={datosEstado}
                                     cx="50%"
                                     cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                    outerRadius={80}
+                                    labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
+                                    label={({ cx, cy, midAngle, outerRadius, name, percent, index }) => {
+                                        const RADIAN = Math.PI / 180;
+                                        const radius = outerRadius + 36;
+                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                        return (
+                                            <text
+                                                x={x} y={y}
+                                                fill={COLORS[index % COLORS.length]}
+                                                textAnchor={x > cx ? 'start' : 'end'}
+                                                dominantBaseline="central"
+                                                fontSize={13}
+                                                fontWeight="500"
+                                                fontFamily="sans-serif"
+                                            >
+                                                {`${name} ${(percent * 100).toFixed(0)}%`}
+                                            </text>
+                                        );
+                                    }}
+                                    outerRadius={85}
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
