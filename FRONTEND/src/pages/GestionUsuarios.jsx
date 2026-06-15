@@ -3,7 +3,7 @@ import DashboardLayout from '@components/Layout/DashboardLayout';
 import usuariosService from '@api/services/usuarios.service';
 import administradoresService from '@api/services/administradores.service';
 import useSession from '@context/Auth/useSession';
-import { FiUsers, FiUser, FiTool, FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { FiUsers, FiUser, FiTool, FiPlus, FiTrash2, FiEdit2, FiLogOut } from 'react-icons/fi';
 
 const GestionUsuarios = () => {
     const { session } = useSession();
@@ -338,6 +338,55 @@ const GestionUsuarios = () => {
 
     return (
         <DashboardLayout title="Gestión de Usuarios">
+            <div style={{ backgroundColor: '#f8fafc', minHeight: '100%' }}>
+                <style>{`
+                  @keyframes guFloat1 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+                  @keyframes guFloat2 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(18px); } }
+                  @keyframes guShimmer { 0% { opacity: 0.2; } 50% { opacity: 0.5; } 100% { opacity: 0.2; } }
+                `}</style>
+                <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)', padding: '2rem', position: 'relative', overflow: 'hidden', color: 'white' }}>
+                    <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(96,165,250,0.12)', animation: 'guFloat1 8s ease-in-out infinite' }} />
+                    <div style={{ position: 'absolute', bottom: '-40px', left: '30%', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(147,197,253,0.09)', animation: 'guFloat2 10s ease-in-out infinite' }} />
+                    <div style={{ position: 'absolute', top: '20%', left: '55%', width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', animation: 'guShimmer 5s ease-in-out infinite' }} />
+                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '700', letterSpacing: '-0.01em' }}>Gestión de Usuarios</h1>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.825rem', color: 'rgba(255,255,255,0.6)' }}>Controla el acceso y cuentas de usuario del sistema</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem("session");
+                                window.location.href = "/auth";
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.625rem 1.25rem',
+                                backgroundColor: 'rgba(255,255,255,0.15)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '0.5rem',
+                                color: 'white',
+                                fontSize: '0.875rem',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                        >
+                            <FiLogOut style={{ width: '16px', height: '16px' }} />
+                            Cerrar sesión
+                        </button>
+                    </div>
+                </div>
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -653,6 +702,7 @@ const GestionUsuarios = () => {
                 </div>
             )}
 
+            </div>
             </div>
         </DashboardLayout>
     );

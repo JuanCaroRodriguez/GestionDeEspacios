@@ -113,7 +113,25 @@ El Sistema de Gestión de Espacios Universitarios es una aplicación web moderna
 - **Análisis por tipo**: uso comparativo entre aulas, laboratorios, oficinas y otros espacios
 - **Espacios más utilizados**: ranking de los 10 espacios con mayor demanda
 - **Tendencias mensuales**: evolución del uso de espacios a lo largo del tiempo
-- **Exportación a CSV**: descarga de datos filtrados para análisis externo
+
+#### **Sistema de Exportación PDF Mejorado**
+
+- **Opciones de exportación** mediante menú desplegable con un solo botón "Exportar"
+- **Reporte Visual**: PDF de una sola página en formato landscape con:
+  - Gráficas interactivas (barras, líneas, pastel) capturadas como imágenes
+  - Tarjetas de estadísticas con diseño moderno
+  - Layout optimizado para presentación visual
+- **Exportación de Datos**: PDF con tabla detallada de reservas incluyendo:
+  - **Fecha de Reserva**: fecha programada de la reserva
+  - **Hora Inicio y Fin**: franjas horarias completas
+  - **Tipo Espacio**: clasificación del espacio reservado
+  - **Bloque, Piso y Salón**: ubicación detallada
+  - **Estado**: estado actual de la reserva
+  - **Responsable**: nombre del solicitante
+  - **Motivo**: descripción del propósito (con ancho maximizado para escritura)
+- **Formato landscape** para mejor visualización de datos tabulares
+- **Paginación automática** para manejar grandes volúmenes de datos
+- **Diseño consistente** con colores y tipografía de la marca
 - **Acceso restringido**: disponible solo para administradores y super administradores
 
 ---

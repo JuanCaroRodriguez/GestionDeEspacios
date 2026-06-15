@@ -5,7 +5,8 @@ import bloquesService from '@api/services/bloques.service';
 import reservasService from '@api/services/reservas.service';
 import useSession from '../context/Auth/useSession';
 import { toast } from 'sonner';
-import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo, FiLogOut } from 'react-icons/fi';
+import ModalResumenReserva from '@components/ModalResumenReserva';
 
 const ConsultaDisponibilidad = () => {
     const { session } = useSession();
@@ -32,6 +33,8 @@ const ConsultaDisponibilidad = () => {
     const [reservaMotivo, setReservaMotivo] = useState('');
     const [loadingReserva, setLoadingReserva] = useState(false);
     const creatingRef = useRef(false); // Guarda sincrónica contra doble-click
+    const [showResumenModal, setShowResumenModal] = useState(false);
+    const [resumenReserva, setResumenReserva] = useState(null);
 
     // Franjas horarias
     const timeSlots = [
@@ -224,21 +227,23 @@ const ConsultaDisponibilidad = () => {
                 if (prevSlots.length === 0) {
                     newSlots = [{ key: slotKey, day, slot, index: slotIndex }];
                 } else {
-                    // Verificar si es consecutiva con alguna franja existente
-                    const isConsecutive = prevSlots.some(existingSlot => {
-                        const dayDiff = days.indexOf(day) - days.indexOf(existingSlot.day);
-                        const indexDiff = Math.abs(slotIndex - existingSlot.index);
-                        
-                        // Misma día y franja consecutiva O día consecutivo y misma franja
-                        return (dayDiff === 0 && indexDiff === 1) || 
-                               (indexDiff === 0 && Math.abs(dayDiff) === 1);
-                    });
-                    
-                    if (isConsecutive) {
-                        newSlots = [...prevSlots, { key: slotKey, day, slot, index: slotIndex }];
-                    } else {
-                        // Si no es consecutiva, reemplazar la selección
+                    // Si el nuevo slot es de un día diferente, reemplazar toda la selección
+                    const differentDay = prevSlots.some(existingSlot => existingSlot.day !== day);
+                    if (differentDay) {
                         newSlots = [{ key: slotKey, day, slot, index: slotIndex }];
+                    } else {
+                        // Mismo día: verificar si es consecutiva con alguna franja existente
+                        const isConsecutive = prevSlots.some(existingSlot => {
+                            const indexDiff = Math.abs(slotIndex - existingSlot.index);
+                            return indexDiff === 1;
+                        });
+                        
+                        if (isConsecutive) {
+                            newSlots = [...prevSlots, { key: slotKey, day, slot, index: slotIndex }];
+                        } else {
+                            // No consecutiva en el mismo día, reemplazar la selección
+                            newSlots = [{ key: slotKey, day, slot, index: slotIndex }];
+                        }
                     }
                 }
             }
@@ -600,6 +605,22 @@ const ConsultaDisponibilidad = () => {
             setReservaMotivo(motivoFinal);
             clearSelection();
             
+            // Mostrar modal de resumen
+            setResumenReserva({
+                espacio: selectedSpace.nombre,
+                bloque: getNombreBloque(selectedSpace.bloque),
+                piso: selectedSpace.piso,
+                salon: selectedSpace.salon,
+                fecha: reservaData.fecha,
+                horaInicio: horaInicioFinal,
+                horaFin: horaFinFinal,
+                motivo: motivoFinal.trim(),
+                tipo: tipoFinal,
+                estado: estadoFinal,
+                usuario: session?.user?.nombre,
+                franjas: sortedSlots
+            });
+            setShowResumenModal(true);
             
             toast.success('Reserva creada exitosamente');
         } catch (error) {
@@ -950,24 +971,36 @@ const ConsultaDisponibilidad = () => {
     if (showSchedule && selectedSpace) {
         return (
             <DashboardLayout title="Horario del Espacio">
-                <div className="p-6">
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center justify-center">
-                            <FiCalendar className="w-5 h-5 mr-2" /> Horario - {selectedSpace.nombre}
-                        </h1>
-                        <div className="flex items-center justify-between mt-2">
-                            <p className="text-gray-600">
-                                {getNombreBloque(selectedSpace.bloque)} - Salón {selectedSpace.salon} | Capacidad: {selectedSpace.capacidad} personas
+                <div style={{ backgroundColor: '#f8fafc', minHeight: '100%' }}>
+                    <style>{`
+                      @keyframes cdFloat1 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+                      @keyframes cdFloat2 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(18px); } }
+                      @keyframes cdShimmer { 0% { opacity: 0.2; } 50% { opacity: 0.5; } 100% { opacity: 0.2; } }
+                    `}</style>
+                    <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)', padding: '1.5rem 2rem', position: 'relative', overflow: 'hidden', color: 'white' }}>
+                        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(96,165,250,0.12)', animation: 'cdFloat1 8s ease-in-out infinite' }} />
+                        <div style={{ position: 'absolute', bottom: '-40px', left: '30%', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(147,197,253,0.09)', animation: 'cdFloat2 10s ease-in-out infinite' }} />
+                        <div style={{ position: 'absolute', top: '20%', left: '55%', width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', animation: 'cdShimmer 5s ease-in-out infinite' }} />
+                        <div style={{ position: 'relative', zIndex: 1 }}>
+                            <p style={{ margin: 0, fontSize: '0.825rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.2rem' }}>
+                                {getNombreBloque(selectedSpace.bloque)} · Salón {selectedSpace.salon} · {selectedSpace.capacidad} personas
                             </p>
-                            <button
-                                onClick={backToSpaces}
-                                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex"
-                            >
-                                <FiArrowLeft className="w-4 h-4 mr-2" />
-                                Volver a espacios
-                            </button>
+                            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.01em' }}>
+                                Horario — {selectedSpace.nombre}
+                            </h1>
                         </div>
                     </div>
+                    <div style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={backToSpaces}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.875rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600', transition: 'all 0.15s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.color = '#0f172a'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569'; }}
+                        >
+                            <FiArrowLeft size={13} /> Volver a espacios
+                        </button>
+                    </div>
+                    <div className="p-6">
                     
 
                     {/* Navegación de semanas */}
@@ -1130,17 +1163,70 @@ const ConsultaDisponibilidad = () => {
                         )}
                     </div>
                 </div>
+                </div>
+
+                {/* Modal de resumen de reserva */}
+                <ModalResumenReserva
+                    show={showResumenModal}
+                    onClose={() => setShowResumenModal(false)}
+                    resumen={resumenReserva}
+                />
             </DashboardLayout>
         );
     }
 
     return (
         <DashboardLayout title="Consulta de Disponibilidad">
-            <div className="p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <FiCalendar className="w-6 h-6" />
-                    Consulta de Disponibilidad
-                </h1>
+            <div style={{ backgroundColor: '#f8fafc', minHeight: '100%' }}>
+                <style>{`
+                  @keyframes cdFloat1 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+                  @keyframes cdFloat2 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(18px); } }
+                  @keyframes cdShimmer { 0% { opacity: 0.2; } 50% { opacity: 0.5; } 100% { opacity: 0.2; } }
+                `}</style>
+                <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)', padding: '2rem', position: 'relative', overflow: 'hidden', color: 'white' }}>
+                    <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(96,165,250,0.12)', animation: 'cdFloat1 8s ease-in-out infinite' }} />
+                    <div style={{ position: 'absolute', bottom: '-40px', left: '30%', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(147,197,253,0.09)', animation: 'cdFloat2 10s ease-in-out infinite' }} />
+                    <div style={{ position: 'absolute', top: '20%', left: '55%', width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', animation: 'cdShimmer 5s ease-in-out infinite' }} />
+                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '700', letterSpacing: '-0.01em' }}>Consulta de Disponibilidad</h1>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.825rem', color: 'rgba(255,255,255,0.6)' }}>Selecciona un bloque y espacio para ver disponibilidad y reservar</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem("session");
+                                window.location.href = "/auth";
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.625rem 1.25rem',
+                                backgroundColor: 'rgba(255,255,255,0.15)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '0.5rem',
+                                color: 'white',
+                                fontSize: '0.875rem',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                        >
+                            <FiLogOut style={{ width: '16px', height: '16px' }} />
+                            Cerrar sesión
+                        </button>
+                    </div>
+                </div>
+                <div className="p-6">
 
                 {/* Mensaje de error */}
                 {error && (
@@ -1301,6 +1387,14 @@ const ConsultaDisponibilidad = () => {
                 </div>
             )}
             </div>
+            </div>
+
+            {/* Modal de resumen de reserva */}
+            <ModalResumenReserva
+                show={showResumenModal}
+                onClose={() => setShowResumenModal(false)}
+                resumen={resumenReserva}
+            />
         </DashboardLayout>
     );
 };

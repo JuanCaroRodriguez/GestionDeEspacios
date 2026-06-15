@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@components/Dashboard/Sidebar';
 import useSession from '@context/Auth/useSession';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const DashboardLayout = ({ children, title }) => {
     const { session } = useSession();
@@ -29,6 +30,37 @@ const DashboardLayout = ({ children, title }) => {
                 sidebarOpen ? 'md:w-64' : 'md:w-16'
             }`}>
                 <Sidebar user={session?.user} collapsed={!sidebarOpen} />
+
+                {/* Toggle tab - pestaña que sobresale del sidebar */}
+                <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    title={sidebarOpen ? 'Contraer barra lateral (Ctrl+B)' : 'Expandir barra lateral (Ctrl+B)'}
+                    style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '100%',
+                        transform: 'translateY(-50%)',
+                        backgroundColor: '#1f2937',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0 6px 6px 0',
+                        padding: '10px 4px',
+                        cursor: 'pointer',
+                        zIndex: 51,
+                        boxShadow: '3px 0 8px rgba(0,0,0,0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#374151'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#1f2937'}
+                >
+                    {sidebarOpen
+                        ? <FiChevronLeft size={14} />
+                        : <FiChevronRight size={14} />
+                    }
+                </button>
             </div>
 
             {/* Overlay for mobile */}
@@ -43,33 +75,12 @@ const DashboardLayout = ({ children, title }) => {
             <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
                 sidebarOpen ? 'md:ml-0' : 'md:ml-0'
             }`}>
+                
                 {/* Top Bar */}
-                <header className="bg-white shadow-sm border-b border-gray-200">
+                {/* <header className="bg-white shadow-sm border-b border-gray-200">
                     <div className="px-4 py-4 flex items-center justify-between">
                         <div className="flex items-center">
-                            <button
-                                onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className="group relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
-                            >
-                                <svg 
-                                    className={`w-6 h-6 transition-all duration-300 ${sidebarOpen ? 'rotate-0' : 'rotate-180'}`}
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                                </svg>
-                                
-                                {/* Tooltip */}
-                                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50">
-                                    <div>{sidebarOpen ? 'Contraer barra lateral' : 'Expandir barra lateral'}</div>
-                                    <div className="text-xs text-gray-400">Ctrl+B</div>
-                                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
-                            </button>
-                            <h1 className={`ml-4 text-xl font-semibold text-gray-900 transition-all duration-300 ${
-                                sidebarOpen ? 'opacity-100' : 'opacity-100'
-                            }`}>
+                            <h1 className="text-xl font-semibold text-gray-900">
                                 ClassMatch Dashboard - {title}
                             </h1>
                         </div>
@@ -88,7 +99,7 @@ const DashboardLayout = ({ children, title }) => {
                             </span>
                         </div>
                     </div>
-                </header>
+                </header> */}
 
                 {/* Main Content Area */}
                 <main className="flex-1 overflow-auto">
