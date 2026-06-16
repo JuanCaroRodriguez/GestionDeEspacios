@@ -2,8 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 :root {
-  font-family: 'Lexend Variable', sans-serif;
+  font-family: "Lexend Variable", sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
