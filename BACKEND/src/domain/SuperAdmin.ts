@@ -42,6 +42,7 @@ export class SuperAdmin extends Persona {
     piso: number,
     salon: string,
     id_empresa: string,
+    departamento?: string,
   ): Espacio {
     console.log(
       `Super admin ${this.nombre} está creando el espacio: ${nombre}`,
@@ -55,6 +56,7 @@ export class SuperAdmin extends Persona {
       piso,
       salon,
       id_empresa,
+      departamento,
     );
   }
 

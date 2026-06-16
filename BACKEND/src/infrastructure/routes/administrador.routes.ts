@@ -20,14 +20,34 @@ router.put("/:id/estado", (req, res) =>
 // GET - Obtener administrador por ID
 router.get("/:id", (req, res) => administradorController.getById(req, res));
 
+// GET - Obtener administrador por email
+router.get("/email/:email", (req, res) =>
+  administradorController.getByEmail(req, res),
+);
+
 // POST - Crear administrador
 router.post("/", async (req, res) => {
   try {
-    const { id, nombre, email, contraseña, permisos, estado, id_empresa } =
-      req.body;
+    const {
+      id,
+      nombre,
+      email,
+      contraseña,
+      permisos,
+      estado,
+      id_empresa,
+      departamento,
+    } = req.body;
 
     // Validaciones básicas
-    if (!id || !nombre || !email || !contraseña || !id_empresa) {
+    if (
+      !id ||
+      !nombre ||
+      !email ||
+      !contraseña ||
+      !id_empresa ||
+      !departamento
+    ) {
       return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
 
@@ -61,6 +81,7 @@ router.post("/", async (req, res) => {
       permisos: permisos || ["evaluar_reservas_laboratorios"],
       estado: estado || "activo",
       id_empresa,
+      departamento,
     });
 
     // Guardar en la base de datos

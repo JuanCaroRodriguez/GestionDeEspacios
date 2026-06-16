@@ -2,6 +2,7 @@ import { Persona } from "./Persona";
 
 export class Administrador extends Persona {
   private id_empresa: string;
+  private departamento: string;
 
   constructor(
     id: string,
@@ -9,10 +10,12 @@ export class Administrador extends Persona {
     email: string,
     contraseña: string,
     id_empresa: string,
+    departamento: string,
     estado: string = "activo",
   ) {
     super(id, nombre, email, contraseña, estado);
     this.id_empresa = id_empresa;
+    this.departamento = departamento;
   }
 
   public getIdEmpresa(): string {
@@ -21,6 +24,14 @@ export class Administrador extends Persona {
 
   public setIdEmpresa(id_empresa: string): void {
     this.id_empresa = id_empresa;
+  }
+
+  public getDepartamento(): string {
+    return this.departamento;
+  }
+
+  public setDepartamento(departamento: string): void {
+    this.departamento = departamento;
   }
 
   public cancelar(): void {

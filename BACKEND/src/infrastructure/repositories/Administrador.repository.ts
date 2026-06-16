@@ -2,7 +2,7 @@ import { IAdministradorRepository } from "../../domain/repositories/IAdministrad
 import { Administrador } from "../../domain/Administrador";
 import {
   AdministradorModel,
-  IAdministrador,
+  IAdministrador as IAdministradorModel,
 } from "../models/Administrador.model";
 
 export class AdministradorRepository implements IAdministradorRepository {
@@ -14,6 +14,7 @@ export class AdministradorRepository implements IAdministradorRepository {
       contraseña: administrador.getContraseña(),
       permisos: ["evaluar_reservas_laboratorios"],
       id_empresa: administrador.getIdEmpresa(),
+      departamento: administrador.getDepartamento(),
     });
 
     const savedAdministrador = await administradorDoc.save();
@@ -34,7 +35,7 @@ export class AdministradorRepository implements IAdministradorRepository {
 
   async update(
     id: string,
-    administradorData: Partial<Administrador>,
+    administradorData: Partial<IAdministradorModel>,
   ): Promise<Administrador | null> {
     const updatedAdministrador = await AdministradorModel.findOneAndUpdate(
       { id },
@@ -90,13 +91,14 @@ export class AdministradorRepository implements IAdministradorRepository {
     return administrador ? administrador.permisos.includes(permiso) : false;
   }
 
-  private mapToEntity(administradorDoc: IAdministrador): Administrador {
+  private mapToEntity(administradorDoc: IAdministradorModel): Administrador {
     const administrador = new Administrador(
       administradorDoc.id,
       administradorDoc.nombre,
       administradorDoc.email,
       administradorDoc.contraseña,
       administradorDoc.id_empresa,
+      administradorDoc.departamento,
       administradorDoc.estado,
     );
     return administrador;

@@ -13,6 +13,7 @@ export class EspacioRepository implements IEspacioRepository {
       bloque: espacio.getBloque(),
       piso: espacio.getPiso(),
       salon: espacio.getSalon(),
+      departamento: espacio.getDepartamento(),
       id_empresa: espacio.getIdEmpresa(),
       disponible: espacio.getDisponible(),
     });
@@ -103,6 +104,7 @@ export class EspacioRepository implements IEspacioRepository {
       espacioDoc.piso,
       espacioDoc.salon,
       espacioDoc.id_empresa,
+      espacioDoc.departamento,
     );
     espacio.setDisponible(espacioDoc.disponible);
     return espacio;

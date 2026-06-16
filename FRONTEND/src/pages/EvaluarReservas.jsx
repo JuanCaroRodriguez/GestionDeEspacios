@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import useSession from '../context/Auth/useSession';
 import reservasService from '@api/services/reservas.service';
+import espaciosService from '@api/services/espacios.service';
 import { FiCalendar, FiClock, FiUser, FiCheck, FiX, FiAlertCircle, FiAlertTriangle, FiFilter, FiRefreshCw, FiSearch, FiChevronDown, FiChevronUp, FiLogOut } from 'react-icons/fi';
 import { toast } from 'sonner';
 
@@ -40,8 +41,39 @@ const EvaluarReservas = () => {
         try {
             setLoading(true);
             setError(null);
-            const todasReservas = await reservasService.getAllByEmpresa(session.user.id_empresa);
-            setReservas(todasReservas.reverse());
+            
+            // Cargar reservas y espacios en paralelo
+            const [todasReservas, espaciosData] = await Promise.all([
+                reservasService.getAllByEmpresa(session.user.id_empresa),
+                espaciosService.getByEmpresa(session.user.id_empresa)
+            ]);
+            
+            // Filtrar reservas según el rol del usuario
+            let reservasFiltradas = todasReservas;
+            const userTipo = session?.user?.tipo;
+            
+            if (userTipo === 'administrador') {
+                // Administrador: laboratorios solo de su departamento
+                const adminDepartamento = session?.user?.departamento;
+                
+                reservasFiltradas = todasReservas.filter(reserva => {
+                    // Buscar el espacio de esta reserva
+                    const espacio = espaciosData.find(e => e.id === reserva.espacioId);
+                    if (!espacio) {
+                        return false;
+                    }
+                    
+                    // Si es laboratorio, debe ser del mismo departamento del administrador
+                    if (espacio.tipo.toLowerCase() === 'laboratorio') {
+                        return espacio.departamento === adminDepartamento;
+                    }
+                    
+                    // Otros tipos de espacios son visibles para todos los administradores
+                    return true;
+                });
+            }
+            
+            setReservas(reservasFiltradas.reverse());
             setCurrentPage(1);
         } catch (error) {
             console.error('Error al cargar reservas:', error);

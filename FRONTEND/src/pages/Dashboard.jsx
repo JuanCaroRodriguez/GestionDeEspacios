@@ -4,6 +4,7 @@ import useSession from "@context/Auth/useSession";
 import CrearEmpresa from "@components/Empresa/CrearEmpresa";
 import empresasService from "@api/services/empresas.service";
 import reservasService from "@api/services/reservas.service";
+import espaciosService from "@api/services/espacios.service";
 import {
   FiCalendar,
   FiTrello,
@@ -58,7 +59,6 @@ const Dashboard = () => {
             setEmpresa(empresaData);
           }
         } catch (error) {
-          console.error("Error al verificar empresa:", error);
           setEmpresa(null);
         } finally {
           setLoadingEmpresa(false);
@@ -79,12 +79,35 @@ const Dashboard = () => {
 
     try {
       setLoadingReservas(true);
-      const todasReservas = await reservasService.getAllByEmpresa(
-        session.user.id_empresa,
-      );
+      
+      // Cargar reservas y espacios en paralelo
+      const [todasReservas, espaciosData] = await Promise.all([
+        reservasService.getAllByEmpresa(session.user.id_empresa),
+        espaciosService.getByEmpresa(session.user.id_empresa)
+      ]);
+
+      // Filtrar reservas según el departamento del administrador
+      let reservasFiltradas = todasReservas;
+      const adminDepartamento = session?.user?.departamento;
+      
+      reservasFiltradas = todasReservas.filter(reserva => {
+        // Buscar el espacio de esta reserva
+        const espacio = espaciosData.find(e => e.id === reserva.espacioId);
+        if (!espacio) {
+          return false;
+        }
+        
+        // Si es laboratorio, debe ser del mismo departamento del administrador
+        if (espacio.tipo.toLowerCase() === 'laboratorio') {
+          return espacio.departamento === adminDepartamento;
+        }
+        
+        // Otros tipos de espacios son visibles para todos los administradores
+        return true;
+      });
 
       // Contar reservas en estado "Pendiente"
-      const pendientes = todasReservas.filter(
+      const pendientes = reservasFiltradas.filter(
         (reserva) => reserva.estado === "Pendiente",
       ).length;
       setReservasPendientes(pendientes);

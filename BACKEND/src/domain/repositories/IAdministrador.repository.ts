@@ -1,4 +1,5 @@
 import { Administrador } from "../Administrador";
+import { IAdministrador as IAdministradorModel } from "../../infrastructure/models/Administrador.model";
 
 export interface IAdministradorRepository {
   // CRUD operations
@@ -7,7 +8,7 @@ export interface IAdministradorRepository {
   findAll(): Promise<Administrador[]>;
   update(
     id: string,
-    administrador: Partial<Administrador>,
+    administrador: Partial<IAdministradorModel>,
   ): Promise<Administrador | null>;
   delete(id: string): Promise<boolean>;
 

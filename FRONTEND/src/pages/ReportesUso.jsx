@@ -3,6 +3,7 @@ import DashboardLayout from '@components/Layout/DashboardLayout';
 import espaciosService from '@api/services/espacios.service';
 import reservasService from '@api/services/reservas.service';
 import bloquesService from '@api/services/bloques.service';
+import { departamentosService } from '@api/services/departamentos.service';
 import useSession from '../context/Auth/useSession';
 import { toast } from 'sonner';
 import { FiBarChart2, FiCalendar, FiFilter, FiDownload, FiRefreshCw, FiPieChart, FiTrendingUp, FiUsers, FiHome, FiLogOut } from 'react-icons/fi';
@@ -15,6 +16,7 @@ const ReportesUso = () => {
     const [espacios, setEspacios] = useState([]);
     const [reservas, setReservas] = useState([]);
     const [bloques, setBloques] = useState([]);
+    const [departamentos, setDepartamentos] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     
     // Filtros
@@ -23,6 +25,8 @@ const ReportesUso = () => {
     const [tipoEspacio, setTipoEspacio] = useState('todos');
     const [estadoReserva, setEstadoReserva] = useState('todos');
     const [selectedBloque, setSelectedBloque] = useState('todos');
+    const [selectedDepartamento, setSelectedDepartamento] = useState('todos');
+    const [modoDepartamento, setModoDepartamento] = useState('solo-labs'); // 'solo-labs' o 'labs-mas-sin-dependencia'
     const [showExportMenu, setShowExportMenu] = useState(false);
     const exportMenuRef = useRef(null);
     
@@ -46,7 +50,7 @@ const ReportesUso = () => {
 
     useEffect(() => {
         aplicarFiltros();
-    }, [reservas, espacios, fechaInicio, fechaFin, tipoEspacio, estadoReserva, selectedBloque]);
+    }, [reservas, espacios, fechaInicio, fechaFin, tipoEspacio, estadoReserva, selectedBloque, selectedDepartamento, modoDepartamento]);
 
     const cargarDatos = async () => {
         try {
@@ -59,16 +63,34 @@ const ReportesUso = () => {
                 return;
             }
 
-            // Cargar espacios, reservas y bloques en paralelo
-            const [espaciosData, reservasData, bloquesData] = await Promise.all([
+            // Cargar espacios, reservas, bloques y departamentos en paralelo
+            const [espaciosData, reservasData, bloquesData, departamentosData] = await Promise.all([
                 espaciosService.getByEmpresa(idEmpresa),
                 reservasService.getAllByEmpresa(idEmpresa),
-                bloquesService.getByIdEmpresa(idEmpresa)
+                bloquesService.getByIdEmpresa(idEmpresa),
+                departamentosService.getByEmpresa(idEmpresa)
             ]);
 
-            setEspacios(espaciosData);
+            // Filtrar espacios según el rol del usuario
+            let espaciosFiltrados = espaciosData;
+            const userTipo = session?.user?.tipo;
+            
+            if (userTipo === 'administrador') {
+                // Administrador: solo laboratorios de su departamento
+                const adminDepartamento = session?.user?.departamento;
+                espaciosFiltrados = espaciosData.filter(espacio => {
+                    if (espacio.tipo.toLowerCase() === 'laboratorio') {
+                        return espacio.departamento === adminDepartamento;
+                    }
+                    return true; // Otros tipos visibles para todos
+                });
+            }
+            // Superadmin: todos los espacios (filtrado se hace en UI)
+
+            setEspacios(espaciosFiltrados);
             setReservas(reservasData);
             setBloques(bloquesData);
+            setDepartamentos(departamentosData);
             
         } catch (err) {
             console.error('Error al cargar datos:', err);
@@ -108,6 +130,35 @@ const ReportesUso = () => {
         // Filtrar por bloque
         if (selectedBloque !== 'todos') {
             const espaciosFiltrados = espacios.filter(e => e.bloque === selectedBloque);
+            const espacioIds = espaciosFiltrados.map(e => e.id);
+            reservasFiltradas = reservasFiltradas.filter(r => espacioIds.includes(r.espacioId));
+        }
+
+        // Filtrar por departamento para administradores y superadmin
+        if (session?.user?.tipo === 'administrador') {
+            // Administrador: solo reservas de espacios visibles (ya filtrados por departamento)
+            const espacioIds = espacios.map(e => e.id);
+            reservasFiltradas = reservasFiltradas.filter(r => espacioIds.includes(r.espacioId));
+        } else if (session?.user?.tipo === 'superadmin' && selectedDepartamento !== 'todos') {
+            let espaciosFiltrados;
+            
+            if (modoDepartamento === 'solo-labs') {
+                // Modo 1: Solo laboratorios del departamento seleccionado
+                espaciosFiltrados = espacios.filter(e => 
+                    e.tipo.toLowerCase() === 'laboratorio' && e.departamento === selectedDepartamento
+                );
+            } else {
+                // Modo 2: Laboratorios del departamento + espacios sin dependencia
+                espaciosFiltrados = espacios.filter(e => {
+                    if (e.tipo.toLowerCase() === 'laboratorio') {
+                        return e.departamento === selectedDepartamento;
+                    } else {
+                        // Espacios que no son laboratorios
+                        return !e.departamento || e.departamento === 'no-aplica';
+                    }
+                });
+            }
+            
             const espacioIds = espaciosFiltrados.map(e => e.id);
             reservasFiltradas = reservasFiltradas.filter(r => espacioIds.includes(r.espacioId));
         }
@@ -646,6 +697,56 @@ const ReportesUso = () => {
                                 })}
                             </select>
                         </div>
+                        
+                        {/* Filtro por departamento - solo para superadmin */}
+                        {session?.user?.tipo === 'superadmin' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Departamento</label>
+                                <select
+                                    value={selectedDepartamento}
+                                    onChange={(e) => setSelectedDepartamento(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="todos">Todos</option>
+                                    {departamentos.map(departamento => (
+                                        <option key={departamento.id} value={departamento.id}>
+                                            {departamento.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                                
+                                {selectedDepartamento !== 'todos' && (
+                                    <div className="mt-2 space-y-2">
+                                        <label className="flex items-center">
+                                            <input
+                                                type="radio"
+                                                name="modoDepartamento"
+                                                value="solo-labs"
+                                                checked={modoDepartamento === 'solo-labs'}
+                                                onChange={(e) => setModoDepartamento(e.target.value)}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm text-gray-700">
+                                                Solo laboratorios de este departamento
+                                            </span>
+                                        </label>
+                                        <label className="flex items-center">
+                                            <input
+                                                type="radio"
+                                                name="modoDepartamento"
+                                                value="labs-mas-sin-dependencia"
+                                                checked={modoDepartamento === 'labs-mas-sin-dependencia'}
+                                                onChange={(e) => setModoDepartamento(e.target.value)}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm text-gray-700">
+                                                Laboratorios del departamento + espacios sin dependencia
+                                            </span>
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 

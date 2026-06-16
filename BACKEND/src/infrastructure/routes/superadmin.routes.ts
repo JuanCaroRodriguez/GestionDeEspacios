@@ -298,7 +298,7 @@ router.post("/administradores", async (req, res) => {
 // Rutas para gestión de espacios
 router.post("/espacios", async (req, res) => {
   try {
-    const { id, nombre, tipo, capacidad, bloque, piso, salon, id_empresa } =
+    const { id, nombre, tipo, capacidad, bloque, piso, salon, id_empresa,departamento } =
       req.body;
 
     if (
@@ -330,6 +330,7 @@ router.post("/espacios", async (req, res) => {
       piso,
       salon,
       id_empresa,
+      departamento
     );
 
     const createdEspacio = await espacioRepository.create(espacio);

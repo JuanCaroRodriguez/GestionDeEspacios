@@ -33,6 +33,23 @@ export class AdministradorController {
     }
   }
 
+  // GET - Obtener administrador por email
+  async getByEmail(req: Request, res: Response) {
+    try {
+      const administrador = await this.administradorRepository.findByEmail(
+        req.params.email,
+      );
+      if (!administrador) {
+        return res.status(404).json({ error: "Administrador no encontrado" });
+      }
+      res.json(administrador);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Error al obtener administrador por email" });
+    }
+  }
+
   // GET - Obtener administradores por empresa
   async getByEmpresa(req: Request, res: Response) {
     try {
@@ -74,9 +91,10 @@ export class AdministradorController {
   // POST - Crear nuevo administrador
   async create(req: Request, res: Response) {
     try {
-      const { id, nombre, email, contraseña, id_empresa } = req.body;
+      const { id, nombre, email, contraseña, id_empresa, departamento } =
+        req.body;
 
-      if (!id || !nombre || !email || !contraseña) {
+      if (!id || !nombre || !email || !contraseña || !departamento) {
         return res.status(400).json({ error: "Faltan campos obligatorios" });
       }
 
@@ -103,7 +121,8 @@ export class AdministradorController {
         nombre,
         email,
         contraseñaHasheada,
-        id_empresa
+        id_empresa,
+        departamento,
       );
 
       const createdAdministrador =
@@ -117,7 +136,7 @@ export class AdministradorController {
   // PUT - Actualizar administrador
   async update(req: Request, res: Response) {
     try {
-      const { nombre, email, contraseña } = req.body;
+      const { nombre, email, contraseña, departamento } = req.body;
 
       const administrador = await this.administradorRepository.findById(
         req.params.id,
@@ -132,6 +151,7 @@ export class AdministradorController {
       // Agregar campos si se proporcionan
       if (nombre) updateData.nombre = nombre;
       if (email) updateData.email = email;
+      if (departamento) updateData.departamento = departamento;
 
       // Hashear contraseña si se proporciona
       if (contraseña) {
@@ -173,7 +193,14 @@ export class AdministradorController {
       }
 
       const { Administrador } = await import("../../domain/Administrador");
-      const administrador = new Administrador("temp", "temp", "temp", "temp", "temp");
+      const administrador = new Administrador(
+        "temp",
+        "temp",
+        "temp",
+        "temp",
+        "temp",
+        "temp-departamento",
+      );
       const resultado = administrador.evaluarSolicitudReservaLaboratorio(
         reservaId,
         solicitante,

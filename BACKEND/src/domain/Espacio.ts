@@ -6,6 +6,7 @@ export class Espacio {
   private bloque: string;
   private piso: number;
   private salon: string;
+  private departamento?: string;
   private id_empresa: string;
   private disponible: boolean;
 
@@ -18,6 +19,7 @@ export class Espacio {
     piso: number,
     salon: string,
     id_empresa: string,
+    departamento?: string,
   ) {
     this.id = id;
     this.nombre = nombre;
@@ -26,6 +28,7 @@ export class Espacio {
     this.bloque = bloque;
     this.piso = piso;
     this.salon = salon;
+    this.departamento = departamento;
     this.id_empresa = id_empresa;
     this.disponible = true;
   }
@@ -90,6 +93,14 @@ export class Espacio {
 
   public setSalon(salon: string): void {
     this.salon = salon;
+  }
+
+  public getDepartamento(): string | undefined {
+    return this.departamento;
+  }
+
+  public setDepartamento(departamento: string): void {
+    this.departamento = departamento;
   }
 
   public setIdEmpresa(id_empresa: string): void {

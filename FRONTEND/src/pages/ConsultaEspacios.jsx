@@ -3,15 +3,18 @@ import DashboardLayout from '@components/Layout/DashboardLayout';
 import espaciosService from '@api/services/espacios.service';
 import bloquesService from '@api/services/bloques.service';
 import reservasService from '@api/services/reservas.service';
+import { departamentosService } from '@api/services/departamentos.service';
 import useSession from '../context/Auth/useSession';
 import { toast } from 'sonner';
-import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo, FiLogOut } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo, FiLogOut} from 'react-icons/fi';
+import { FaRegBuilding } from "react-icons/fa";
 import ModalResumenReserva from '@components/ModalResumenReserva';
 
 const ConsultaDisponibilidad = () => {
     const { session } = useSession();
     const [espacios, setEspacios] = useState([]);
     const [bloques, setBloques] = useState([]);
+    const [departamentos, setDepartamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedBlock, setSelectedBlock] = useState(null); // { bloque, espacios }
@@ -659,6 +662,13 @@ const ConsultaDisponibilidad = () => {
         return bloque ? bloque.nombre : bloqueId;
     };
 
+    // Función helper para obtener el nombre del departamento por ID
+    const getNombreDepartamento = (departamentoId) => {
+        if (!departamentoId) return '';
+        const departamento = departamentos.find(d => d.id === departamentoId);
+        return departamento ? departamento.nombre : '';
+    };
+
     // Cargar todos los espacios y bloques
     useEffect(() => {
         const fetchData = async () => {
@@ -674,10 +684,11 @@ const ConsultaDisponibilidad = () => {
                     return;
                 }
                 
-                // Cargar espacios y bloques en paralelo
-                const [espaciosData, bloquesData] = await Promise.all([
+                // Cargar espacios, bloques y departamentos en paralelo
+                const [espaciosData, bloquesData, departamentosData] = await Promise.all([
                     espaciosService.getByEmpresa(idEmpresa),
-                    bloquesService.getByIdEmpresa(idEmpresa)
+                    bloquesService.getByIdEmpresa(idEmpresa),
+                    departamentosService.getByEmpresa(idEmpresa)
                 ]);
                 
                 // Filtrar espacios según el rol del usuario
@@ -688,11 +699,24 @@ const ConsultaDisponibilidad = () => {
                     // Superadmin: todos los tipos de espacios (sin filtro)
                     espaciosFiltrados = espaciosData;
                 } else if (userTipo === 'administrador') {
-                    // Administrador: todos menos oficinas
-                    espaciosFiltrados = espaciosData.filter(espacio => 
-                        espacio.tipo.toLowerCase() !== 'oficina' &&
-                        espacio.tipo.toLowerCase() !== 'por asignar'
-                    );
+                    // Administrador: todos menos oficinas, pero laboratorios solo de su departamento
+                    const adminDepartamento = session?.user?.departamento;
+                    espaciosFiltrados = espaciosData.filter(espacio => {
+                        const tipo = espacio.tipo.toLowerCase();
+                        
+                        // Excluir oficinas y espacios por asignar
+                        if (tipo === 'oficina' || tipo === 'por asignar') {
+                            return false;
+                        }
+                        
+                        // Si es laboratorio, debe ser del mismo departamento del administrador
+                        if (tipo === 'laboratorio') {
+                            return espacio.departamento === adminDepartamento;
+                        }
+                        
+                        // Otros tipos (aulas, auditorios) son visibles para todos los administradores
+                        return true;
+                    });
                 } else if (userTipo === 'estudiante' || userTipo === 'docente') {
                     // Estudiante/Docente: solo aulas y laboratorios
                     espaciosFiltrados = espaciosData.filter(espacio => {
@@ -704,6 +728,7 @@ const ConsultaDisponibilidad = () => {
                 
                 setEspacios(espaciosFiltrados);
                 setBloques(bloquesData);
+                setDepartamentos(departamentosData);
                 
                 
             } catch (err) {
@@ -776,6 +801,12 @@ const ConsultaDisponibilidad = () => {
                                                 <FiUsers className="w-3 h-3 mr-1" />
                                                 Capacidad: {espacio.capacidad}
                                             </div>
+                                            {espacio.tipo.toLowerCase() === 'laboratorio' && espacio.departamento && espacio.departamento !== 'no-aplica' && (
+                                                <div className="text-xs text-gray-500 flex items-center">
+                                                    <FaRegBuilding className="w-3 h-3 mr-1" />
+                                                    {getNombreDepartamento(espacio.departamento)}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="text-center mt-3">
                                             <span className={`inline-block px-2 py-1 text-xs rounded-full ${

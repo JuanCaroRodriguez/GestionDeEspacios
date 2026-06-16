@@ -6,6 +6,8 @@ import espaciosService from '@api/services/espacios.service';
 
 import bloquesService from '@api/services/bloques.service';
 
+import { departamentosService } from '@api/services/departamentos.service';
+
 import useSession from '../context/Auth/useSession';
 
 import { toast } from 'sonner';
@@ -22,6 +24,8 @@ const GestionEspacios = () => {
     const [espacios, setEspacios] = useState([]);
 
     const [bloques, setBloques] = useState([]);
+
+    const [departamentos, setDepartamentos] = useState([]);
 
     const [selectedBloque, setSelectedBloque] = useState('');
 
@@ -53,7 +57,9 @@ const GestionEspacios = () => {
 
         piso: '',
 
-        salon: ''
+        salon: '',
+
+        departamento: 'no-aplica'
 
     });
 
@@ -71,7 +77,9 @@ const GestionEspacios = () => {
 
         piso: '',
 
-        salon: ''
+        salon: '',
+
+        departamento: 'no-aplica'
 
     });
 
@@ -84,6 +92,8 @@ const GestionEspacios = () => {
     const [filterBloque, setFilterBloque] = useState('');
 
     const [filterPiso, setFilterPiso] = useState('');
+
+    const [filterDepartamento, setFilterDepartamento] = useState('');
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -121,13 +131,15 @@ const GestionEspacios = () => {
 
                 
 
-                // Cargar espacios y bloques en paralelo
+                // Cargar espacios, bloques y departamentos en paralelo
 
-                const [espaciosData, bloquesData] = await Promise.all([
+                const [espaciosData, bloquesData, departamentosData] = await Promise.all([
 
                     espaciosService.getByEmpresa(idEmpresa),
 
-                    bloquesService.getByIdEmpresa(idEmpresa)
+                    bloquesService.getByIdEmpresa(idEmpresa),
+
+                    departamentosService.getByEmpresa(idEmpresa)
 
                 ]);
 
@@ -136,6 +148,8 @@ const GestionEspacios = () => {
                 setEspacios(espaciosData);
 
                 setBloques(bloquesData);
+
+                setDepartamentos(departamentosData);
 
                 console.log('Espacios cargados:', espaciosData);
 
@@ -174,6 +188,18 @@ const GestionEspacios = () => {
         const bloque = bloques.find(b => b.id === bloqueId);
 
         return bloque ? bloque.nombre : bloqueId;
+
+    };
+
+    // Función helper para obtener el nombre del departamento por ID
+
+    const getNombreDepartamento = (departamentoId) => {
+
+        if (!departamentoId || departamentoId === 'no-aplica') return 'No aplica';
+
+        const departamento = departamentos.find(d => d.id === departamentoId);
+
+        return departamento ? departamento.nombre : departamentoId;
 
     };
 
@@ -219,6 +245,7 @@ const GestionEspacios = () => {
 
             // Crear nuevo espacio en la API
 
+            console.log("Datos de creación: ",formData)
             const nuevoEspacio = {
 
                 ...formData,
@@ -233,7 +260,8 @@ const GestionEspacios = () => {
 
                 id_empresa: session?.user?.id_empresa,
 
-                disponible: true
+                disponible: true,
+                departamento :formData.departamento
 
             };
 
@@ -381,6 +409,7 @@ const GestionEspacios = () => {
 
 
 
+        const departamentoValor = espacio.departamento || 'no-aplica';
         setEditFormData({
 
             id: espacio.id,
@@ -395,7 +424,9 @@ const GestionEspacios = () => {
 
             piso: espacio.piso?.toString() || '',
 
-            salon: numeroEspacio
+            salon: numeroEspacio,
+
+            departamento: departamentoValor
 
         });
 
@@ -443,7 +474,7 @@ const GestionEspacios = () => {
 
 
             // Actualizar espacio en la API
-
+            console.log("Datos de edición:",editFormData)
             const espacioActualizado = {
 
                 ...editFormData,
@@ -452,7 +483,9 @@ const GestionEspacios = () => {
 
                 piso: parseInt(editFormData.piso),
 
-                salon: salonFormato // Usar el código calculado
+                salon: salonFormato,// Usar el código calculado
+                
+                departamento:editFormData.departamento
 
             };
 
@@ -486,7 +519,9 @@ const GestionEspacios = () => {
 
                 bloque: '',
 
-                salon: ''
+                salon: '',
+
+                departamento: 'no-aplica'
 
             });
 
@@ -512,13 +547,26 @@ const GestionEspacios = () => {
 
         const { name, value } = e.target;
 
-        setEditFormData({
+        // Si cambia el tipo y no es Laboratorio, establecer departamento a no-aplica
+        if (name === 'tipo' && value !== 'Laboratorio') {
+            setEditFormData({
 
-            ...editFormData,
+                ...editFormData,
 
-            [name]: value
+                [name]: value,
 
-        });
+                departamento: 'no-aplica'
+
+            });
+        } else {
+            setEditFormData({
+
+                ...editFormData,
+
+                [name]: value
+
+            });
+        }
 
     };
 
@@ -590,13 +638,26 @@ const GestionEspacios = () => {
 
         const { name, value } = e.target;
 
-        setFormData({
+        // Si cambia el tipo y no es Laboratorio, establecer departamento a no-aplica
+        if (name === 'tipo' && value !== 'Laboratorio') {
+            setFormData({
 
-            ...formData,
+                ...formData,
 
-            [name]: value
+                [name]: value,
 
-        });
+                departamento: 'no-aplica'
+
+            });
+        } else {
+            setFormData({
+
+                ...formData,
+
+                [name]: value
+
+            });
+        }
 
     };
 
@@ -708,6 +769,25 @@ const GestionEspacios = () => {
         if (filterPiso && espacio.piso?.toString() !== filterPiso) {
 
             return false;
+
+        }
+
+        
+
+        // Filtro por departamento
+
+        if (filterDepartamento) {
+
+            if (filterDepartamento === 'no-aplica') {
+
+                // Mostrar espacios con departamento = 'no-aplica' en BD
+                return espacio.departamento === 'no-aplica';
+
+            } else {
+
+                return espacio.departamento === filterDepartamento;
+
+            }
 
         }
 
@@ -902,7 +982,7 @@ const GestionEspacios = () => {
 
             <div className="bg-white rounded-lg shadow p-4 mb-6">
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
 
                     <div>
 
@@ -988,6 +1068,48 @@ const GestionEspacios = () => {
 
                         <label className="block text-sm font-medium text-gray-700 mb-1">
 
+                            Departamento
+
+                        </label>
+
+                        <select
+
+                            value={filterDepartamento}
+
+                            onChange={(e) => {
+
+                                setFilterDepartamento(e.target.value);
+
+                                setCurrentPage(1);
+
+                            }}
+
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+                        >
+
+                            <option value="">Todos los departamentos</option>
+
+                            <option value="no-aplica">No aplica</option>
+
+                            {departamentos.map((departamento) => (
+
+                                <option key={departamento.id} value={departamento.id}>
+
+                                    {departamento.nombre}
+
+                                </option>
+
+                            ))}
+
+                        </select>
+
+                    </div>
+
+                    <div>
+
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+
                             Búsqueda general
 
                         </label>
@@ -1023,6 +1145,8 @@ const GestionEspacios = () => {
                                 setFilterBloque('');
 
                                 setFilterPiso('');
+
+                                setFilterDepartamento('');
 
                                 setFilterUbicacion('');
 
@@ -1171,6 +1295,12 @@ const GestionEspacios = () => {
 
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 
+                                    Departamento
+
+                                </th>
+
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
                                     Espacio
 
                                 </th>
@@ -1197,7 +1327,7 @@ const GestionEspacios = () => {
 
                                 <tr>
 
-                                    <td colSpan="6" className="px-6 py-4 text-center">
+                                    <td colSpan="7" className="px-6 py-4 text-center">
 
                                         <div className="flex items-center justify-center">
 
@@ -1242,6 +1372,12 @@ const GestionEspacios = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 
                                             {getNombreBloque(espacio.bloque)}
+
+                                        </td>
+
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+
+                                            {getNombreDepartamento(espacio.departamento)}
 
                                         </td>
 
@@ -1507,11 +1643,53 @@ const GestionEspacios = () => {
 
                             </div>
 
-                            
+                            {formData.tipo === 'Laboratorio' ? (
+                                <div>
+
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+
+                                        Departamento
+
+                                    </label>
+
+                                    <select
+
+                                        name="departamento"
+
+                                        value={formData.departamento}
+
+                                        onChange={handleInputChange}
+
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+                                    >
+
+                                        <option value="">Seleccionar departamento</option>
+
+                                        {departamentos.map((departamento) => (
+
+                                            <option key={departamento.id} value={departamento.id}>
+
+                                                {departamento.nombre}
+
+                                        </option>
+
+                                    ))}
+
+                                </select>
+
+                            </div>
+                            ) : (
+                                <input
+                                    type="hidden"
+                                    name="departamento"
+                                    value="no-aplica"
+                                />
+                            )}
 
                             <div>
 
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-700 mb-1">
 
                                     Capacidad de personas
 
@@ -1802,6 +1980,50 @@ const GestionEspacios = () => {
                                 </select>
 
                             </div>
+
+                            {editFormData.tipo === 'Laboratorio' ? (
+                                <div>
+
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+
+                                        Departamento
+
+                                    </label>
+
+                                    <select
+
+                                        name="departamento"
+
+                                        value={editFormData.departamento}
+
+                                        onChange={handleEditInputChange}
+
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+                                    >
+
+                                        <option value="">Seleccionar departamento</option>
+
+                                        {departamentos.map((departamento) => (
+
+                                            <option key={departamento.id} value={departamento.id}>
+
+                                                {departamento.nombre}
+
+                                            </option>
+
+                                        ))}
+
+                                    </select>
+
+                                </div>
+                            ) : (
+                                <input
+                                    type="hidden"
+                                    name="departamento"
+                                    value="no-aplica"
+                                />
+                            )}
 
                             
 

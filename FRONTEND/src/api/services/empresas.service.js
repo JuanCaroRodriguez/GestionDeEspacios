@@ -29,7 +29,6 @@ const empresasService = {
             const response = await axiosInstance.get(`/empresas/${id}`);
             return response.data;
         } catch (error) {
-            console.error('Error al obtener empresa:', error);
             throw error;
         }
     },

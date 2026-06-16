@@ -65,8 +65,9 @@ router.post("/login", async (req, res) => {
             id: user.getId(),
             nombre: user.getNombre(),
             email: user.getEmail(),
-            id_empresa: user.getIdEmpresa() ||null,
+            id_empresa: user.getIdEmpresa() || null,
             tipo: "administrador",
+            departamento: user.getDepartamento() || null,
             permisos: ["evaluar_reservas_laboratorios"],
           };
         }

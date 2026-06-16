@@ -8,6 +8,7 @@ export interface IEspacio extends Document {
   bloque: string;
   piso: number;
   salon: string;
+  departamento?: string;
   id_empresa: string;
   disponible: boolean;
   createdAt: Date;
@@ -45,6 +46,10 @@ const EspacioSchema = new Schema<IEspacio>(
     salon: {
       type: String,
       required: true,
+    },
+    departamento: {
+      type: String,
+      required: false,
     },
     id_empresa: {
       type: String,

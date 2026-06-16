@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@components/Layout/DashboardLayout';
 import administradoresService from '@api/services/administradores.service';
+import { departamentosService } from '@api/services/departamentos.service';
 import useSession from '@context/Auth/useSession';
 import { FiRefreshCw, FiUserPlus, FiEdit, FiTrash2, FiUsers, FiLogOut } from 'react-icons/fi';
 
@@ -19,11 +20,20 @@ const GestionAdministradores = () => {
     const [formData, setFormData] = useState({
         nombre: '',
         email: '',
-        contraseña: ''
+        contraseña: '',
+        departamento: ''
     });
+    const [departamentos, setDepartamentos] = useState([]);
     const [filtros, setFiltros] = useState({
         busqueda: ''
     });
+
+    // Función helper para obtener el nombre del departamento por ID
+    const getNombreDepartamento = (departamentoId) => {
+        if (!departamentoId) return 'No aplica';
+        const departamento = departamentos.find(d => d.id === departamentoId);
+        return departamento ? departamento.nombre : departamentoId;
+    };
 
     // Cargar datos desde la API
     useEffect(() => {
@@ -36,9 +46,13 @@ const GestionAdministradores = () => {
                 const idEmpresa = session?.user?.id_empresa;
                 
                 
-                // Usar getByEmpresa() para filtrar por empresa
-                const data = await administradoresService.getByEmpresa(idEmpresa);
-                setAdministradores(data);
+                // Cargar administradores y departamentos en paralelo
+                const [administradoresData, departamentosData] = await Promise.all([
+                    administradoresService.getByEmpresa(idEmpresa),
+                    departamentosService.getByEmpresa(idEmpresa)
+                ]);
+                setAdministradores(administradoresData);
+                setDepartamentos(departamentosData);
             } catch (err) {
                 console.error('Error al cargar administradores:', err);
                 setError('No se pudieron cargar los administradores. Por favor, intente nuevamente.');
@@ -57,14 +71,15 @@ const GestionAdministradores = () => {
         setFormData({
             nombre: administrador.nombre,
             email: administrador.email,
-            contraseña: ''
+            contraseña: '',
+            departamento: administrador.departamento || ''
         });
         setShowModal(true);
     };
 
     const handleCreateAdministrador = async () => {
         // Validaciones
-        if (!formData.nombre || !formData.email || !formData.contraseña) {
+        if (!formData.nombre || !formData.email || !formData.contraseña || !formData.departamento) {
             alert('Por favor complete todos los campos obligatorios');
             return;
         }
@@ -125,7 +140,8 @@ const GestionAdministradores = () => {
                 tipo: 'administrador',
                 permisos: ['evaluar_reservas_laboratorios'],
                 estado: 'activo',
-                id_empresa: idEmpresa
+                id_empresa: idEmpresa,
+                departamento: formData.departamento
             };
 
             const response = await administradoresService.create(nuevoAdministrador);
@@ -139,7 +155,8 @@ const GestionAdministradores = () => {
             setFormData({
                 nombre: '',
                 email: '',
-                contraseña: ''
+                contraseña: '',
+                departamento: ''
             });
         } catch (error) {
             console.error('Error al crear administrador:', error);
@@ -149,7 +166,7 @@ const GestionAdministradores = () => {
 
     const handleUpdateAdministrador = async () => {
         // Validaciones
-        if (!formData.nombre || !formData.email) {
+        if (!formData.nombre || !formData.email || !formData.departamento) {
             alert('Por favor complete todos los campos obligatorios');
             return;
         }
@@ -170,7 +187,8 @@ const GestionAdministradores = () => {
         try {
             const updateData = {
                 nombre: formData.nombre,
-                email: formData.email
+                email: formData.email,
+                departamento: formData.departamento
             };
 
             // Agregar contraseña solo si se proporcionó
@@ -194,7 +212,8 @@ const GestionAdministradores = () => {
             setFormData({
                 nombre: '',
                 email: '',
-                contraseña: ''
+                contraseña: '',
+                departamento: ''
             });
         } catch (error) {
             console.error('Error al actualizar administrador:', error);
@@ -439,6 +458,9 @@ const GestionAdministradores = () => {
                                         Email
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Departamento
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Estado
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -449,7 +471,7 @@ const GestionAdministradores = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="4" className="px-6 py-4 text-center">
+                                        <td colSpan="5" className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center">
                                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
                                                 <span>Cargando...</span>
@@ -469,6 +491,9 @@ const GestionAdministradores = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {administrador.email}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {getNombreDepartamento(administrador.departamento)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <label className="flex items-center cursor-pointer">
@@ -563,8 +588,28 @@ const GestionAdministradores = () => {
                                         onChange={handleInputChange}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Mínimo 6 caracteres"
-                                        required
+                                        required={editMode ? false : true}
                                     />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Departamento
+                                    </label>
+                                    <select
+                                        name="departamento"
+                                        value={formData.departamento}
+                                        onChange={handleInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option value="">Seleccionar departamento</option>
+                                        {departamentos.map((departamento) => (
+                                            <option key={departamento.id} value={departamento.id}>
+                                                {departamento.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                             

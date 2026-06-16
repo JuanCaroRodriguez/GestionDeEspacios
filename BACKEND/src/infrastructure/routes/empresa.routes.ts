@@ -56,7 +56,6 @@ router.get('/:id', async (req, res) => {
         }
         res.json(empresa);
     } catch (error) {
-        console.error('Error al obtener empresa:', error);
         res.status(500).json({ error: 'Error al obtener empresa' });
     }
 });

@@ -10,7 +10,7 @@ const espacioRepository = new EspacioRepository();
 // POST /api/bloques - Crear bloque
 router.post("/", async (req, res) => {
   try {
-    const { nombre, id_empresa, pisos } = req.body;
+    const { nombre, id_empresa, pisos, departamento } = req.body;
 
     // Validaciones
     if (!nombre || !id_empresa) {
@@ -64,11 +64,12 @@ router.post("/", async (req, res) => {
             espacioId,
             nombreEspacio,
             "Por asignar", // tipo
-            capacidadEspacio, // capacidad ✅ USAR CAPACIDAD CORRECTA
+            capacidadEspacio, // capacidad 
             id, // id_bloque
             numeroPiso, // piso
             salonFormato, // salon (formato nuevo)
             id_empresa, // id_empresa
+            departamento, // departamento (heredado del bloque)
           );
 
           const createdEspacio = await espacioRepository.create(espacio);
@@ -183,15 +184,18 @@ router.delete("/:id", async (req, res) => {
 // POST /api/bloques/:id/pisos - Añadir piso a un bloque
 router.post("/:id/pisos", async (req, res) => {
   try {
-    const { numero, cantidadSalones, capacidadSalones, capacidadesSalones } =
-      req.body;
+    const {
+      numero,
+      cantidadSalones,
+      capacidadSalones,
+      capacidadesSalones,
+      departamento,
+    } = req.body;
 
     if (!numero || !cantidadSalones || !capacidadSalones) {
-      return res
-        .status(400)
-        .json({
-          error: "El número, cantidad de salones y capacidad son obligatorios",
-        });
+      return res.status(400).json({
+        error: "El número, cantidad de salones y capacidad son obligatorios",
+      });
     }
 
     const bloque = await bloqueRepository.findById(req.params.id);
@@ -227,6 +231,7 @@ router.post("/:id/pisos", async (req, res) => {
         numero, // piso
         salonFormato, // salon
         bloque.getIdEmpresa(), // id_empresa
+        departamento, // departamento (heredado del bloque)
       );
 
       const createdEspacio = await espacioRepository.create(espacio);

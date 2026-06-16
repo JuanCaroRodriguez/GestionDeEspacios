@@ -147,7 +147,7 @@ router.post("/", async (req, res) => {
 // PUT - Actualizar espacio
 router.put("/:id", async (req, res) => {
   try {
-    const { nombre, tipo, capacidad, bloque, salon, disponible } = req.body;
+    const { nombre, tipo, capacidad, bloque, salon, disponible,departamento } = req.body;
 
     const espacio = await espacioRepository.findById(req.params.id);
     if (!espacio) {
@@ -161,6 +161,7 @@ router.put("/:id", async (req, res) => {
     if (bloque) espacio.setBloque(bloque);
     if (salon) espacio.setSalon(salon);
     if (disponible !== undefined) espacio.setDisponible(disponible);
+    if(departamento) espacio.setDepartamento(departamento)
 
     const updatedEspacio = await espacioRepository.update(
       req.params.id,

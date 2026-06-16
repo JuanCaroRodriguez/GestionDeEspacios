@@ -8,6 +8,7 @@ export interface IAdministrador extends Document {
   permisos: string[];
   estado: "activo" | "inactivo" | "suspendido";
   id_empresa: string;
+  departamento: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,10 @@ const AdministradorSchema = new Schema<IAdministrador>(
       required: true,
     },
     id_empresa: {
+      type: String,
+      required: true,
+    },
+    departamento: {
       type: String,
       required: true,
     },
