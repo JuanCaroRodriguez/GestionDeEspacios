@@ -95,6 +95,8 @@ const GestionEspacios = () => {
 
     const [filterDepartamento, setFilterDepartamento] = useState('');
 
+    const [filterTipo, setFilterTipo] = useState('');
+
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const [createdSpace, setCreatedSpace] = useState(null);
@@ -793,6 +795,13 @@ const GestionEspacios = () => {
 
         
 
+        // Filtro por tipo
+        if (filterTipo && espacio.tipo !== filterTipo) {
+            return false;
+        }
+
+        
+
         // Filtro por ubicación (búsqueda general)
 
         if (filterUbicacion) {
@@ -982,7 +991,47 @@ const GestionEspacios = () => {
 
             <div className="bg-white rounded-lg shadow p-4 mb-6">
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+
+                    <div>
+
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+
+                            Tipo
+
+                        </label>
+
+                        <select
+
+                            value={filterTipo}
+
+                            onChange={(e) => {
+
+                                setFilterTipo(e.target.value);
+
+                                setCurrentPage(1);
+
+                            }}
+
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+                        >
+
+                            <option value="">Todos los tipos</option>
+
+                            <option value="Por asignar">Por asignar</option>
+
+                            <option value="Laboratorio">Laboratorio</option>
+
+                            <option value="Aula">Aula</option>
+
+                            <option value="Auditorio">Auditorio</option>
+
+                            <option value="Oficina">Oficina</option>
+
+                        </select>
+
+                    </div>
 
                     <div>
 
@@ -1147,6 +1196,8 @@ const GestionEspacios = () => {
                                 setFilterPiso('');
 
                                 setFilterDepartamento('');
+
+                                setFilterTipo('');
 
                                 setFilterUbicacion('');
 
