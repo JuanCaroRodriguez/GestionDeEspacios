@@ -53,7 +53,7 @@ function SessionState({ children }) {
   const handleLogOut = useCallback(() => {
     setLoading(true)
     setSession(null)
-    guardarEnLocalStorage('session', null)
+    localStorage.clear()
     setLoading(false)
     navigate(ROUTES.auth.login)
   }, [])
