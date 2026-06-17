@@ -1,3 +1,10 @@
+/**
+ * Sistema de Gestión de Espacios Universitarios — API Backend
+ *
+ * @authors
+ *   Wendy Buelvas España  — https://github.com/WendyBuelvas
+ *   Juan C. Caro           — https://github.com/JuanCaroRodriguez
+ */
 import "dotenv/config";
 import express from "express";
 import cors from "cors";

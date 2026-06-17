@@ -105,7 +105,7 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
 
   return (
     <div
-      className={`bg-gray-800 text-white h-full transition-all duration-300 ease-in-out ${
+      className={`relative bg-gray-800 text-white h-full transition-all duration-300 ease-in-out ${
         collapsed ? "w-16" : "w-64"
       }`}
     >
@@ -181,6 +181,18 @@ const Sidebar = ({ user, empresa, collapsed = false }) => {
         {/* Logout */}
         
       </nav>
+
+      {/* Credits */}
+      {!collapsed && (
+        <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-700">
+          <p className="text-gray-500 text-xs text-center leading-relaxed">
+            Desarrollado por<br />
+            <a href="https://github.com/WendyBuelvas" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">Wendy Buelvas</a>
+            {" & "}
+            <a href="https://github.com/JuanCaroRodriguez" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">Juan C. Caro</a>
+          </p>
+        </div>
+      )}
     </div>
   );
 };

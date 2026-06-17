@@ -12,7 +12,7 @@
     "insert-users": "node scripts/insert-users.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Wendy Buelvas España <github.com/WendyBuelvas> & Juan C. Caro <github.com/JuanCaroRodriguez>",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",

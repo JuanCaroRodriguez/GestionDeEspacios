@@ -2,6 +2,16 @@
   "name": "gestion-aulas",
   "private": true,
   "version": "0.0.0",
+  "authors": [
+    {
+      "name": "Wendy Buelvas España",
+      "url": "https://github.com/WendyBuelvas"
+    },
+    {
+      "name": "Juan C. Caro",
+      "url": "https://github.com/JuanCaroRodriguez"
+    }
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -289,4 +289,17 @@ Para reportar problemas, sugerir mejoras o contribuir al desarrollo del proyecto
 
 ---
 
-_Versión 1.0.0 | Sistema de Gestión de Espacios Universitarios_
+## [Equipo de Desarrollo]
+
+Este sistema fue planificado, diseñado y desarrollado por:
+
+| Rol                            | Nombre               | GitHub                                                     |
+| ------------------------------ | -------------------- | ---------------------------------------------------------- |
+| Planificadora & Desarrolladora | Wendy Buelvas España | [@WendyBuelvas](https://github.com/WendyBuelvas)           |
+| Planificador & Desarrollador   | Juan C. Caro         | [@JuanCaroRodriguez](https://github.com/JuanCaroRodriguez) |
+
+---
+
+_Versión 2.0.0 | Sistema de Gestión de Espacios Universitarios_
+
+_Desarrollado por Wendy Buelvas España & Juan C. Caro — Proyecto de Grado_
