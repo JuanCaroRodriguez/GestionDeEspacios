@@ -16,6 +16,7 @@ const MisReservas = () => {
   const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
   const [reservaIdToCancel, setReservaIdToCancel] = useState(null);
   const [cancelando, setCancelando] = useState(false);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -52,9 +53,10 @@ const MisReservas = () => {
 
   const confirmarCancelarReserva = async () => {
     if (!reservaIdToCancel) return;
+    if (!motivoCancelacion.trim()) return;
     try {
       setCancelando(true);
-      await reservasService.cancelReserva(reservaIdToCancel);
+      await reservasService.updateEstado(reservaIdToCancel, 'Cancelada', motivoCancelacion.trim());
       toast.success('Reserva cancelada exitosamente');
       cargarMisReservas();
     } catch (error) {
@@ -64,6 +66,7 @@ const MisReservas = () => {
       setCancelando(false);
       setModalCancelarOpen(false);
       setReservaIdToCancel(null);
+      setMotivoCancelacion('');
     }
   };
 
@@ -71,6 +74,7 @@ const MisReservas = () => {
     if (cancelando) return;
     setModalCancelarOpen(false);
     setReservaIdToCancel(null);
+    setMotivoCancelacion('');
   };
 
   const estadoConfig = {
@@ -385,12 +389,23 @@ const MisReservas = () => {
                     </div>
 
                     {/* Type + Motive */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: canCancel ? '0.875rem' : 0, gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (canCancel || (reserva.estado === 'Cancelada' && reserva.motivo_cancelacion)) ? '0.625rem' : 0, gap: '0.5rem' }}>
                       {getTipoBadge(reserva.tipo)}
                       <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }} title={reserva.motivo}>
                         {reserva.motivo}
                       </span>
                     </div>
+
+                    {/* Motivo cancelación */}
+                    {reserva.estado === 'Cancelada' && reserva.motivo_cancelacion && (
+                      <div style={{ marginBottom: '0.625rem', padding: '0.5rem 0.625rem', borderRadius: '0.5rem', background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'flex-start', gap: '0.375rem' }}>
+                        <FiAlertTriangle size={12} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.125rem' }}>Motivo cancelación</span>
+                          <span style={{ fontSize: '0.75rem', color: '#b91c1c', lineHeight: '1.3' }}>{reserva.motivo_cancelacion}</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Cancel Button */}
                     {canCancel && (
@@ -426,15 +441,29 @@ const MisReservas = () => {
                 </button>
               </div>
               <div className="px-6 py-5">
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  ¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                  Indica el motivo por el cual deseas cancelar esta reserva.
                 </p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Motivo de cancelación <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={motivoCancelacion}
+                  onChange={e => setMotivoCancelacion(e.target.value)}
+                  disabled={cancelando}
+                  rows={4}
+                  placeholder="Ej: Ya no necesito el espacio para esa fecha..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent disabled:opacity-50"
+                />
+                {!motivoCancelacion.trim() && (
+                  <p className="mt-1 text-xs text-gray-400">Este campo es obligatorio para continuar.</p>
+                )}
               </div>
               <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
                 <button onClick={cerrarModalCancelar} disabled={cancelando} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
                   Volver
                 </button>
-                <button onClick={confirmarCancelarReserva} disabled={cancelando} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2">
+                <button onClick={confirmarCancelarReserva} disabled={cancelando || !motivoCancelacion.trim()} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2">
                   {cancelando ? (
                     <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Cancelando...</>
                   ) : 'Sí, cancelar reserva'}

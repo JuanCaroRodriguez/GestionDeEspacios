@@ -270,11 +270,13 @@ const reservasService = {
   },
 
   // Actualizar el estado de una reserva
-  async updateEstado(reservaId, nuevoEstado) {
+  async updateEstado(reservaId, nuevoEstado, motivo_cancelacion = null) {
     try {
+      const body = { estado: nuevoEstado };
+      if (motivo_cancelacion) body.motivo_cancelacion = motivo_cancelacion;
       const response = await axios.put(
         `${API_URL}/api/reservas/${reservaId}/estado`,
-        { estado: nuevoEstado },
+        body,
       );
       return response.data;
     } catch (error) {

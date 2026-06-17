@@ -38,6 +38,7 @@ const ConsultaDisponibilidad = () => {
     const creatingRef = useRef(false); // Guarda sincrónica contra doble-click
     const [showResumenModal, setShowResumenModal] = useState(false);
     const [resumenReserva, setResumenReserva] = useState(null);
+    const [conflictoEspacio, setConflictoEspacio] = useState(null);
 
     // Franjas horarias
     const timeSlots = [
@@ -214,7 +215,7 @@ const ConsultaDisponibilidad = () => {
 
     // Función para manejar clic en franja disponible
     const handleSlotClick = (day, slot) => {
-        if (!selectedSpace || estaOcupado(day, slot) || esSlotPasado(day, slot)) return;
+        if (!selectedSpace || loadingReservas || estaOcupado(day, slot) || esSlotPasado(day, slot)) return;
 
         const slotKey = `${day}-${slot}`;
         const slotIndex = timeSlots.indexOf(slot);
@@ -600,6 +601,17 @@ const ConsultaDisponibilidad = () => {
             
             
             
+            // Verificar conflicto con reservas vigentes (estado 'Reservada')
+            const reservaConflicto = reservas.find(r =>
+                reservasService.reservaAfectaHorario(r, fecha, firstSlot.day, horaInicioFinal, horaFinFinal, session?.user?.id_empresa)
+            );
+            if (reservaConflicto) {
+                setConflictoEspacio(reservaConflicto);
+                setLoadingReserva(false);
+                creatingRef.current = false;
+                return;
+            }
+
             await reservasService.create(reservaData);
             // Recargar reservas del espacio
             await cargarReservasEspacio(selectedSpace.id);
@@ -1097,7 +1109,13 @@ const ConsultaDisponibilidad = () => {
                         </div>
                     )}
 
-                    <div className="bg-white rounded-lg shadow overflow-auto">
+                    <div className="bg-white rounded-lg shadow overflow-auto relative">
+                        {loadingReservas && (
+                            <div className="absolute inset-0 bg-white/75 z-10 flex flex-col items-center justify-center rounded-lg gap-3">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                                <span className="text-sm text-gray-600 font-medium">Cargando disponibilidad...</span>
+                            </div>
+                        )}
                         <table className="min-w-full">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -1419,6 +1437,39 @@ const ConsultaDisponibilidad = () => {
             )}
             </div>
             </div>
+
+            {/* Modal espacio ocupado */}
+            {conflictoEspacio && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/50" style={{ zIndex: 100000 }}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                <FiAlertCircle className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Espacio ocupado</h3>
+                        </div>
+                        <div className="px-6 py-5">
+                            <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                                Este espacio ya tiene una reserva vigente para ese horario:
+                            </p>
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800 space-y-1">
+                                <div><span className="font-medium">Horario:</span> {conflictoEspacio.horaInicio} – {conflictoEspacio.horaFin}</div>
+                                {conflictoEspacio.personaNombre && <div><span className="font-medium">Reservado por:</span> {conflictoEspacio.personaNombre}</div>}
+                                {conflictoEspacio.motivo && <div><span className="font-medium">Motivo:</span> {conflictoEspacio.motivo}</div>}
+                            </div>
+                            <p className="text-gray-500 text-xs mt-3">Por favor selecciona otro horario disponible.</p>
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setConflictoEspacio(null)}
+                                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal de resumen de reserva */}
             <ModalResumenReserva

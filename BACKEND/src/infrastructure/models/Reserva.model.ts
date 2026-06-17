@@ -12,6 +12,7 @@ export interface IReserva extends Document {
   fechaFin: Date;
   estado: "Reservada" | "Ejecutada" | "Cancelada" | "Pendiente";
   motivo: string;
+  motivo_cancelacion?: string | null;
   id_empresa: string;
   createdAt: Date;
   updatedAt: Date;
@@ -68,6 +69,10 @@ const ReservaSchema = new Schema<IReserva>(
     motivo: {
       type: String,
       required: true,
+    },
+    motivo_cancelacion: {
+      type: String,
+      default: null,
     },
     id_empresa: {
       type: String,

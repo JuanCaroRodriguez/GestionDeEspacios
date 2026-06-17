@@ -51,10 +51,18 @@ export class ReservaRepository implements IReservaRepository {
     return updatedReserva ? await this.mapToEntity(updatedReserva) : null;
   }
 
-  async updateEstado(id: string, estado: string): Promise<Reserva | null> {
+  async updateEstado(
+    id: string,
+    estado: string,
+    motivo_cancelacion?: string | null,
+  ): Promise<Reserva | null> {
+    const updateData: Record<string, unknown> = { estado };
+    if (motivo_cancelacion !== undefined) {
+      updateData.motivo_cancelacion = motivo_cancelacion;
+    }
     const updatedReserva = await ReservaModel.findOneAndUpdate(
       { id },
-      { estado },
+      updateData,
       { new: true },
     );
     return updatedReserva ? await this.mapToEntity(updatedReserva) : null;
@@ -183,6 +191,7 @@ export class ReservaRepository implements IReservaRepository {
 
     // Establecer el estado
     reserva.setEstado(reservaDoc.estado || "Reservada");
+    reserva.setMotivoCancelacion(reservaDoc.motivo_cancelacion ?? null);
 
     return reserva;
   }
@@ -236,6 +245,7 @@ export class ReservaRepository implements IReservaRepository {
         | "Cancelada"
         | "Pendiente",
     );
+    reserva.setMotivoCancelacion(reservaDoc.motivo_cancelacion ?? null);
 
     return reserva;
   }

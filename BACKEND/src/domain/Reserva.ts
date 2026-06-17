@@ -13,6 +13,7 @@ export class Reserva {
   private estado: "Reservada" | "Ejecutada" | "Cancelada" | "Pendiente";
   private motivo: string;
   private id_empresa: string;
+  private motivo_cancelacion: string | null;
 
   constructor(
     id: string,
@@ -35,6 +36,7 @@ export class Reserva {
     this.tipo = tipo;
     this.motivo = motivo;
     this.id_empresa = id_empresa;
+    this.motivo_cancelacion = null;
     // Crear fecha base y clonarla para evitar mutación
     const fechaBase = new Date(fecha);
     this.fechaInicio = new Date(fechaBase);
@@ -99,6 +101,10 @@ export class Reserva {
     return this.motivo;
   }
 
+  public getMotivoCancelacion(): string | null {
+    return this.motivo_cancelacion;
+  }
+
   public getIdEmpresa(): string {
     return this.id_empresa;
   }
@@ -128,6 +134,10 @@ export class Reserva {
 
   public setMotivo(motivo: string): void {
     this.motivo = motivo;
+  }
+
+  public setMotivoCancelacion(motivo_cancelacion: string | null): void {
+    this.motivo_cancelacion = motivo_cancelacion;
   }
 
   public cancelar(): void {

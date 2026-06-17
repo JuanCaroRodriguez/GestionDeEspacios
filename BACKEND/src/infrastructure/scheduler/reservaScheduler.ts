@@ -38,7 +38,13 @@ async function marcarReservasEjecutadas(): Promise<void> {
         tipo: "ocasional",
         fechaFin: { $lte: ahora },
       },
-      { $set: { estado: "Cancelada" } },
+      {
+        $set: {
+          estado: "Cancelada",
+          motivo_cancelacion:
+            "No se aprobo solicitud antes de comenzar su ejecución",
+        },
+      },
     );
     if (resultadoCanceladas.modifiedCount > 0) {
       console.log(

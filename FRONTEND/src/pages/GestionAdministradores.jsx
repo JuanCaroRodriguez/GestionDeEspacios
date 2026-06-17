@@ -447,8 +447,8 @@ const GestionAdministradores = () => {
 
                 {/* Lista de Administradores */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                    <div>
+                        <table className="w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -481,7 +481,7 @@ const GestionAdministradores = () => {
                                 ) : (
                                     administradoresFiltrados.map((administrador) => (
                                         <tr key={administrador.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4 ">
                                                 <div className="flex items-center">
                                                     <FiUsers className="w-5 h-5 mr-2 text-blue-600" />
                                                     <div>
@@ -489,13 +489,13 @@ const GestionAdministradores = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4  text-sm text-gray-900">
                                                 {administrador.email}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4  text-sm text-gray-900">
                                                 {getNombreDepartamento(administrador.departamento)}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4 ">
                                                 <label className="flex items-center cursor-pointer">
                                                     <input
                                                         type="checkbox"
@@ -512,7 +512,7 @@ const GestionAdministradores = () => {
                                                     </span>
                                                 </label>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4  text-sm text-gray-900">
                                                 <div className="flex space-x-2">
                                                     <button
                                                         onClick={() => handleEditAdministrador(administrador)}

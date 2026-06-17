@@ -450,8 +450,8 @@ const GestionUsuarios = () => {
 
             {/* Lista de Usuarios */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                <div>
+                    <table className="w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -484,7 +484,7 @@ const GestionUsuarios = () => {
                             ) : (
                                 usuariosFiltrados.map((usuario) => (
                                     <tr key={usuario.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-4 ">
                                             <div className="flex items-center">
                                                 <span className="text-lg mr-2">{getTipoIcon(usuario.tipo)}</span>
                                                 <div>
@@ -492,10 +492,10 @@ const GestionUsuarios = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
                                             {usuario.email}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-4 ">
                                             <span className={`px-2 py-1 text-xs rounded-full ${
                                                 usuario.tipo === 'estudiante' 
                                                     ? 'bg-blue-100 text-blue-800' 
@@ -504,7 +504,7 @@ const GestionUsuarios = () => {
                                                 {usuario.tipo}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-4 ">
                                             <label className="flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
@@ -521,7 +521,7 @@ const GestionUsuarios = () => {
                                                 </span>
                                             </label>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => handleEditUsuario(usuario)}

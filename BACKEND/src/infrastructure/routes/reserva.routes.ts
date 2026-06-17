@@ -293,6 +293,7 @@ router.get("/persona/:personaId", async (req, res) => {
           tipo: reserva.getTipo(),
           estado: reserva.getEstado(),
           motivo: reserva.getMotivo(),
+          motivo_cancelacion: reserva.getMotivoCancelacion(),
           id_empresa: reserva.getIdEmpresa(),
           fechaInicio: reserva.getFechaInicio(),
           fechaFin: reserva.getFechaFin(),
@@ -344,8 +345,9 @@ router.get("/empresa/:id_empresa", async (req, res) => {
           horaInicio: reserva.getHoraInicio(),
           horaFin: reserva.getHoraFin(),
           tipo: reserva.getTipo(),
-          estado: reserva.getEstado(), // ESTE ES EL CAMPO CLAVE
+          estado: reserva.getEstado(),
           motivo: reserva.getMotivo(),
+          motivo_cancelacion: reserva.getMotivoCancelacion(),
           id_empresa: reserva.getIdEmpresa(),
           fechaInicio: reserva.getFechaInicio(),
           fechaFin: reserva.getFechaFin(),
@@ -364,7 +366,7 @@ router.get("/empresa/:id_empresa", async (req, res) => {
 router.put("/:id/estado", async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    const { estado, motivo_cancelacion } = req.body;
 
     // Validar que el estado sea válido
     const estadosValidos = ["Pendiente", "Reservada", "Cancelada", "Ejecutada"];
@@ -373,7 +375,11 @@ router.put("/:id/estado", async (req, res) => {
     }
 
     // Actualizar la reserva
-    const reservaActualizada = await reservaRepository.updateEstado(id, estado);
+    const reservaActualizada = await reservaRepository.updateEstado(
+      id,
+      estado,
+      motivo_cancelacion ?? null,
+    );
 
     if (!reservaActualizada) {
       return res.status(404).json({ error: "Reserva no encontrada" });
@@ -384,6 +390,7 @@ router.put("/:id/estado", async (req, res) => {
       reserva: {
         id: reservaActualizada.getId(),
         estado: reservaActualizada.getEstado(),
+        motivo_cancelacion: reservaActualizada.getMotivoCancelacion(),
       },
     });
   } catch (error) {

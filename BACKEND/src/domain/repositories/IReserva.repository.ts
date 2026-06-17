@@ -22,4 +22,9 @@ export interface IReservaRepository {
   findByEmpresa(id_empresa: string): Promise<Reserva[]>;
   existsById(id: string): Promise<boolean>;
   cancelReserva(id: string): Promise<boolean>;
+  updateEstado(
+    id: string,
+    estado: string,
+    motivo_cancelacion?: string | null,
+  ): Promise<Reserva | null>;
 }

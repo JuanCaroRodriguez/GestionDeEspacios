@@ -26,6 +26,12 @@ const EvaluarReservas = () => {
     const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
     const [reservaIdToCancel, setReservaIdToCancel] = useState(null);
     const [cancelando, setCancelando] = useState(false);
+    const [motivoCancelar, setMotivoCancelar] = useState('');
+    const [conflictoModal, setConflictoModal] = useState(null);
+    const [modalRechazarOpen, setModalRechazarOpen] = useState(false);
+    const [reservaIdToRechazar, setReservaIdToRechazar] = useState(null);
+    const [motivoRechazo, setMotivoRechazo] = useState('');
+    const [rechazando, setRechazando] = useState(false);
 
     useEffect(() => {
         cargarReservas();
@@ -84,6 +90,36 @@ const EvaluarReservas = () => {
     };
 
     const handleAprobar = async (reservaId) => {
+        const reservaAprobar = reservas.find(r => r.id === reservaId);
+        if (reservaAprobar) {
+            const conflicto = reservas.find(r => {
+                if (r.id === reservaId) return false;
+                if (r.estado !== 'Reservada') return false;
+                if (r.espacioId !== reservaAprobar.espacioId) return false;
+
+                const fecha1 = new Date(reservaAprobar.fecha);
+                const fecha2 = new Date(r.fecha);
+                let mismoDia = false;
+                if (r.tipo === 'permanente' || reservaAprobar.tipo === 'permanente') {
+                    mismoDia = fecha1.getUTCDay() === fecha2.getUTCDay();
+                } else {
+                    mismoDia = reservasService.esMismaFecha(fecha1, fecha2);
+                }
+                if (!mismoDia) return false;
+
+                const ini1 = reservasService.horaAMinutos(reservaAprobar.horaInicio);
+                const fin1 = reservasService.horaAMinutos(reservaAprobar.horaFin);
+                const ini2 = reservasService.horaAMinutos(r.horaInicio);
+                const fin2 = reservasService.horaAMinutos(r.horaFin);
+                return ini1 < fin2 && fin1 > ini2;
+            });
+
+            if (conflicto) {
+                setConflictoModal({ reservaConflicto: conflicto, reservaAprobar });
+                return;
+            }
+        }
+
         try {
             setLoadingAction(reservaId);
             await reservasService.updateEstado(reservaId, 'Reservada');
@@ -97,31 +133,53 @@ const EvaluarReservas = () => {
         }
     };
 
-    const handleRechazar = async (reservaId) => {
+    const handleRechazar = (reservaId) => {
+        setReservaIdToRechazar(reservaId);
+        setMotivoRechazo('');
+        setModalRechazarOpen(true);
+    };
+
+    const confirmarRechazar = async () => {
+        if (!reservaIdToRechazar) return;
+        if (!motivoRechazo.trim()) return;
         try {
-            setLoadingAction(reservaId);
-            await reservasService.updateEstado(reservaId, 'Cancelada');
+            setRechazando(true);
+            setLoadingAction(reservaIdToRechazar);
+            await reservasService.updateEstado(reservaIdToRechazar, 'Cancelada', motivoRechazo.trim());
             toast.success('Reserva rechazada exitosamente');
-            cargarReservas(); // Recargar la lista
+            cargarReservas();
         } catch (error) {
             console.error('Error al rechazar reserva:', error);
             toast.error('Error al rechazar la reserva');
         } finally {
+            setRechazando(false);
             setLoadingAction(null);
+            setModalRechazarOpen(false);
+            setReservaIdToRechazar(null);
+            setMotivoRechazo('');
         }
+    };
+
+    const cerrarModalRechazar = () => {
+        if (rechazando) return;
+        setModalRechazarOpen(false);
+        setReservaIdToRechazar(null);
+        setMotivoRechazo('');
     };
 
     const handleCancelar = (reservaId) => {
         setReservaIdToCancel(reservaId);
+        setMotivoCancelar('');
         setModalCancelarOpen(true);
     };
 
     const confirmarCancelar = async () => {
         if (!reservaIdToCancel) return;
+        if (!motivoCancelar.trim()) return;
         try {
             setCancelando(true);
             setLoadingAction(reservaIdToCancel);
-            await reservasService.updateEstado(reservaIdToCancel, 'Cancelada');
+            await reservasService.updateEstado(reservaIdToCancel, 'Cancelada', motivoCancelar.trim());
             toast.success('Reserva cancelada exitosamente');
             cargarReservas();
         } catch (error) {
@@ -132,6 +190,7 @@ const EvaluarReservas = () => {
             setLoadingAction(null);
             setModalCancelarOpen(false);
             setReservaIdToCancel(null);
+            setMotivoCancelar('');
         }
     };
 
@@ -139,6 +198,7 @@ const EvaluarReservas = () => {
         if (cancelando) return;
         setModalCancelarOpen(false);
         setReservaIdToCancel(null);
+        setMotivoCancelar('');
     };
 
     const getEstadoColor = (estado) => {
@@ -476,8 +536,8 @@ const EvaluarReservas = () => {
                         <h2 className="text-lg font-semibold text-gray-900">Todas las Reservas</h2>
                         <span className="text-sm text-gray-500">{reservasFiltradas.length} resultado(s)</span>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                    <div>
+                        <table className="w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -515,12 +575,12 @@ const EvaluarReservas = () => {
                                         .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                         .map((reserva) => (
                                         <tr key={reserva.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <div className="text-sm font-medium text-gray-900">
                                                     {reserva.espacioNombre || 'Espacio no encontrado'}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <div className="flex items-center">
                                                     <FiUser className="w-4 h-4 text-gray-400 mr-2" />
                                                     <div className="text-sm text-gray-900">
@@ -528,7 +588,7 @@ const EvaluarReservas = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <div className="text-sm text-gray-900">
                                                     {new Date(reserva.fecha).toLocaleDateString('es-ES', {
                                                         day: '2-digit',
@@ -537,7 +597,7 @@ const EvaluarReservas = () => {
                                                     })}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <div className="flex items-center">
                                                     <FiClock className="w-4 h-4 text-gray-400 mr-2" />
                                                     <div className="text-sm text-gray-900">
@@ -545,18 +605,24 @@ const EvaluarReservas = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getEstadoColor(reserva.estado)}`}>
                                                     {getEstadoIcon(reserva.estado)}
                                                     <span className="ml-1">{reserva.estado}</span>
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900 max-w-xs truncate">
-                                                    {reserva.motivo || 'Sin motivo'}
+                                                <div className="text-sm text-gray-900 max-w-xs">
+                                                    <span className="truncate block">{reserva.motivo || 'Sin motivo'}</span>
+                                                    {reserva.estado === 'Cancelada' && reserva.motivo_cancelacion && (
+                                                        <span className="mt-1 flex items-center gap-1 text-xs text-red-600 font-medium">
+                                                            <FiAlertCircle className="w-3 h-3 flex-shrink-0" />
+                                                            <span className="truncate" title={reserva.motivo_cancelacion}>{reserva.motivo_cancelacion}</span>
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4">
                                                 {reserva.estado === 'Pendiente' ? (
                                                     <div className="flex space-x-2">
                                                         <button
@@ -670,9 +736,23 @@ const EvaluarReservas = () => {
                         </div>
 
                         <div className="px-6 py-5">
-                            <p className="text-gray-600 text-sm leading-relaxed">
-                                ¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.
+                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                Indica el motivo por el cual se cancela esta reserva.
                             </p>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Motivo de cancelación <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={motivoCancelar}
+                                onChange={e => setMotivoCancelar(e.target.value)}
+                                disabled={cancelando}
+                                rows={4}
+                                placeholder="Ej: El espacio requiere mantenimiento urgente..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent disabled:opacity-50"
+                            />
+                            {!motivoCancelar.trim() && (
+                                <p className="mt-1 text-xs text-gray-400">Este campo es obligatorio para continuar.</p>
+                            )}
                         </div>
 
                         <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
@@ -685,7 +765,7 @@ const EvaluarReservas = () => {
                             </button>
                             <button
                                 onClick={confirmarCancelar}
-                                disabled={cancelando}
+                                disabled={cancelando || !motivoCancelar.trim()}
                                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {cancelando ? (
@@ -696,6 +776,95 @@ const EvaluarReservas = () => {
                                 ) : (
                                     'Sí, cancelar reserva'
                                 )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal motivo de rechazo */}
+            {modalRechazarOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                                    <FiX className="w-5 h-5 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">Rechazar reserva</h3>
+                            </div>
+                            <button onClick={cerrarModalRechazar} className="text-gray-400 hover:text-gray-600 transition-colors" disabled={rechazando}>
+                                <FiX className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-5">
+                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                Indica el motivo por el cual se rechaza esta reserva. Este mensaje será visible para el solicitante.
+                            </p>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Motivo de cancelación <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={motivoRechazo}
+                                onChange={e => setMotivoRechazo(e.target.value)}
+                                disabled={rechazando}
+                                rows={4}
+                                placeholder="Ej: El espacio no está disponible para ese horario por mantenimiento..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent disabled:opacity-50"
+                            />
+                            {!motivoRechazo.trim() && (
+                                <p className="mt-1 text-xs text-gray-400">Este campo es obligatorio para continuar.</p>
+                            )}
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={cerrarModalRechazar}
+                                disabled={rechazando}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                Volver
+                            </button>
+                            <button
+                                onClick={confirmarRechazar}
+                                disabled={rechazando || !motivoRechazo.trim()}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {rechazando ? (
+                                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Rechazando...</>
+                                ) : 'Confirmar rechazo'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal espacio ocupado */}
+            {conflictoModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                <FiAlertTriangle className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Espacio ocupado</h3>
+                        </div>
+                        <div className="px-6 py-5">
+                            <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                                Este espacio ya tiene una reserva vigente para ese horario:
+                            </p>
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800 space-y-1">
+                                <div><span className="font-medium">Fecha:</span> {conflictoModal.reservaConflicto.fecha}</div>
+                                <div><span className="font-medium">Horario:</span> {conflictoModal.reservaConflicto.horaInicio} – {conflictoModal.reservaConflicto.horaFin}</div>
+                                <div><span className="font-medium">Reservado por:</span> {conflictoModal.reservaConflicto.personaNombre || 'N/A'}</div>
+                            </div>
+                            <p className="text-gray-500 text-xs mt-3">No se puede aprobar esta reserva mientras el espacio esté ocupado en ese horario.</p>
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setConflictoModal(null)}
+                                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
+                            >
+                                Entendido
                             </button>
                         </div>
                     </div>

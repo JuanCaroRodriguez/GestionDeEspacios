@@ -63,6 +63,8 @@ const GestionEspacios = () => {
 
     });
 
+    const [formErrors, setFormErrors] = useState({});
+
     const [editFormData, setEditFormData] = useState({
 
         id: '',
@@ -209,21 +211,30 @@ const GestionEspacios = () => {
 
     const handleCreateEspacio = async () => {
 
-        // Validaciones
-
-        if (!formData.nombre || !formData.tipo || !formData.capacidad || !formData.bloque || !formData.piso || !formData.salon) {
-
-            toast.error('Por favor complete todos los campos');
-
-            return;
-
+        // Validaciones por campo
+        const errors = {};
+        if (!formData.nombre.trim()) errors.nombre = 'El nombre es obligatorio';
+        if (!formData.tipo) errors.tipo = 'Debes seleccionar un tipo';
+        if (!formData.capacidad) {
+            errors.capacidad = 'La capacidad es obligatoria';
+        } else if (parseInt(formData.capacidad) <= 0) {
+            errors.capacidad = 'La capacidad debe ser mayor a 0';
+        }
+        if (!formData.bloque) errors.bloque = 'Debes seleccionar un bloque';
+        if (!formData.piso) errors.piso = 'Debes seleccionar un piso';
+        if (!formData.salon) errors.salon = 'El número de espacio es obligatorio';
+        if (formData.tipo === 'Laboratorio' && (!formData.departamento || formData.departamento === 'no-aplica' || formData.departamento === '')) {
+            errors.departamento = 'Los laboratorios deben tener un departamento asignado';
+        }
+        if (formData.salon && isEspacioDuplicado()) {
+            errors.salon = `El espacio ${formData.salon} ya existe en este bloque y piso`;
         }
 
-        // Validar que el espacio no esté duplicado
-        if (isEspacioDuplicado()) {
-            toast.error(`El espacio ${formData.salon} ya existe en el bloque ${formData.bloque} y piso ${formData.piso}`);
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
             return;
         }
+        setFormErrors({});
 
 
 
@@ -640,6 +651,8 @@ const GestionEspacios = () => {
 
         const { name, value } = e.target;
 
+        setFormErrors(prev => ({ ...prev, [name]: '' }));
+
         // Si cambia el tipo y no es Laboratorio, establecer departamento a no-aplica
         if (name === 'tipo' && value !== 'Laboratorio') {
             setFormData({
@@ -666,7 +679,9 @@ const GestionEspacios = () => {
     // Manejar cambio de bloque para obtener pisos disponibles
     const handleBloqueChange = (e) => {
         const bloqueId = e.target.value;
-        
+
+        setFormErrors(prev => ({ ...prev, bloque: '', piso: '', salon: '' }));
+
         // Actualizar formData
         setFormData({
             ...formData,
@@ -1312,9 +1327,9 @@ const GestionEspacios = () => {
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
 
-                <div className="overflow-x-auto">
+                <div>
 
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="w-full divide-y divide-gray-200">
 
                         <thead className="bg-gray-50">
 
@@ -1398,13 +1413,13 @@ const GestionEspacios = () => {
 
                                     <tr key={espacio.id} data-espacio-id={espacio.id} className="hover:bg-gray-50">
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             {espacio.nombre}
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
 
@@ -1414,31 +1429,31 @@ const GestionEspacios = () => {
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             {espacio.capacidad}
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             {getNombreBloque(espacio.bloque)}
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             {getNombreDepartamento(espacio.departamento)}
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             {espacio.salon}
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             <button
 
@@ -1472,7 +1487,7 @@ const GestionEspacios = () => {
 
                                         </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4  text-sm text-gray-900">
 
                                             <div className="flex space-x-2">
 
@@ -1654,6 +1669,12 @@ const GestionEspacios = () => {
 
                                 />
 
+                                {formErrors.nombre && (
+                                    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                        <span>⚠</span> {formErrors.nombre}
+                                    </p>
+                                )}
+
                             </div>
 
                             
@@ -1692,6 +1713,12 @@ const GestionEspacios = () => {
 
                                 </select>
 
+                                {formErrors.tipo && (
+                                    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                        <span>⚠</span> {formErrors.tipo}
+                                    </p>
+                                )}
+
                             </div>
 
                             {formData.tipo === 'Laboratorio' ? (
@@ -1729,6 +1756,12 @@ const GestionEspacios = () => {
 
                                 </select>
 
+                                {formErrors.departamento && (
+                                    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                        <span>⚠</span> {formErrors.departamento}
+                                    </p>
+                                )}
+
                             </div>
                             ) : (
                                 <input
@@ -1765,6 +1798,12 @@ const GestionEspacios = () => {
                                     required
 
                                 />
+
+                                {formErrors.capacidad && (
+                                    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                        <span>⚠</span> {formErrors.capacidad}
+                                    </p>
+                                )}
 
                             </div>
 
@@ -1808,6 +1847,12 @@ const GestionEspacios = () => {
 
                                     </select>
 
+                                    {formErrors.bloque && (
+                                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                            <span>⚠</span> {formErrors.bloque}
+                                        </p>
+                                    )}
+
                                 </div>
 
                                 <div>
@@ -1848,6 +1893,12 @@ const GestionEspacios = () => {
 
                                     </select>
 
+                                    {formErrors.piso && (
+                                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                            <span>⚠</span> {formErrors.piso}
+                                        </p>
+                                    )}
+
                                 </div>
 
                                 <div>
@@ -1882,14 +1933,10 @@ const GestionEspacios = () => {
 
                                     />
 
-                                    {formData.salon && isEspacioDuplicado() && (
-
-                                        <p className="text-xs text-red-600 mt-1">
-
-                                            El espacio {formData.salon} ya existe en este bloque y piso
-
+                                    {formErrors.salon && (
+                                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                            <span>⚠</span> {formErrors.salon}
                                         </p>
-
                                     )}
 
                                     {formData.piso && !formData.salon && (
@@ -1916,7 +1963,7 @@ const GestionEspacios = () => {
 
                                 type="button"
 
-                                onClick={() => setShowModal(false)}
+                                onClick={() => { setShowModal(false); setFormErrors({}); }}
 
                                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
