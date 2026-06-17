@@ -28,6 +28,7 @@ const ReportesUso = () => {
     const [selectedDepartamento, setSelectedDepartamento] = useState('todos');
     const [modoDepartamento, setModoDepartamento] = useState('solo-labs'); // 'solo-labs' o 'labs-mas-sin-dependencia'
     const [showExportMenu, setShowExportMenu] = useState(false);
+    const [errorFechas, setErrorFechas] = useState('');
     const exportMenuRef = useRef(null);
     
     // Estadísticas
@@ -636,7 +637,14 @@ const ReportesUso = () => {
                             <input
                                 type="date"
                                 value={fechaInicio}
-                                onChange={(e) => setFechaInicio(e.target.value)}
+                                onChange={(e) => {
+                                    const nuevaFecha = e.target.value;
+                                    setFechaInicio(nuevaFecha);
+                                    if (fechaFin && new Date(nuevaFecha) > new Date(fechaFin)) {
+                                        setFechaFin('');
+                                        setErrorFechas('');
+                                    }
+                                }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                         </div>
@@ -646,7 +654,16 @@ const ReportesUso = () => {
                             <input
                                 type="date"
                                 value={fechaFin}
-                                onChange={(e) => setFechaFin(e.target.value)}
+                                min={fechaInicio}
+                                onChange={(e) => {
+                                    const nuevaFecha = e.target.value;
+                                    if (fechaInicio && new Date(nuevaFecha) < new Date(fechaInicio)) {
+                                        setErrorFechas('La fecha final no puede ser anterior a la fecha inicial');
+                                        return;
+                                    }
+                                    setErrorFechas('');
+                                    setFechaFin(nuevaFecha);
+                                }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                         </div>
@@ -748,6 +765,15 @@ const ReportesUso = () => {
                             </div>
                         )}
                     </div>
+
+                    {errorFechas && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+                            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <span>{errorFechas}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tarjetas de estadísticas */}

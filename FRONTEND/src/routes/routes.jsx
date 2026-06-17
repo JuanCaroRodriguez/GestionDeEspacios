@@ -3,6 +3,7 @@ import App from "../App";
 import { ROUTES } from "../tools/CONSTANTS";
 import LoadComponent from "./LoadComponents";
 import SessionState from "../context/Auth/SessionState";
+import ProtectedRoute from "./ProtectedRoute";
 
 // Mapa estático de rutas a módulos
 const componentMap = {
@@ -48,31 +49,59 @@ const router = [
       },
       {
         path: "/dashboard/espacios",
-        element: <LoadComponent component="GestionEspacios" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <LoadComponent component="GestionEspacios" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard/consulta-espacios",
-        element: <LoadComponent component="ConsultaDisponibilidad" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['superadmin', 'administrador', 'estudiante', 'docente']}>
+            <LoadComponent component="ConsultaDisponibilidad" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard/mis-reservas",
-        element: <LoadComponent component="MisReservas" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['estudiante', 'docente']}>
+            <LoadComponent component="MisReservas" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard/usuarios",
-        element: <LoadComponent component="GestionUsuarios" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <LoadComponent component="GestionUsuarios" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard/administradores",
-        element: <LoadComponent component="GestionAdministradores" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['superadmin']}>
+            <LoadComponent component="GestionAdministradores" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard/evaluar-reservas",
-        element: <LoadComponent component="EvaluarReservas" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['administrador']}>
+            <LoadComponent component="EvaluarReservas" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard/reportes-uso",
-        element: <LoadComponent component="ReportesUso" componentsMap={componentMap} loading={<></>} />,
+        element: (
+          <ProtectedRoute allowedRoles={['superadmin', 'administrador']}>
+            <LoadComponent component="ReportesUso" componentsMap={componentMap} loading={<></>} />
+          </ProtectedRoute>
+        ),
       },
       {
         path: ROUTES.errors.notFound,
