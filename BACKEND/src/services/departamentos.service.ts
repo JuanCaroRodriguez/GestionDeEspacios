@@ -1,4 +1,4 @@
-import { DepartamentoRepository } from "../repositories/departamentos.repository";
+import { DepartamentoRepository } from "../infrastructure/repositories/departamentos.repository";
 import { IDepartamento } from "../infrastructure/models/Departamento.model";
 import { EmpresaModel } from "../infrastructure/models/Empresa.model";
 

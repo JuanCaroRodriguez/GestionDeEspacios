@@ -1,7 +1,4 @@
-import {
-  DepartamentoModel,
-  IDepartamento,
-} from "../infrastructure/models/Departamento.model";
+import { DepartamentoModel, IDepartamento } from "../models/Departamento.model";
 
 export class DepartamentoRepository {
   async create(
