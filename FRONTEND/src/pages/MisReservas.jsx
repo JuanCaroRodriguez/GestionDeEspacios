@@ -234,7 +234,7 @@ const MisReservas = () => {
               }}
             >
               <FiLogOut style={{ width: '16px', height: '16px' }} />
-              Cerrar sesión
+              <span className="hidden sm:inline">Cerrar sesión</span>
             </button>
           </div>
         </div>

@@ -130,7 +130,6 @@ const Login = () => {
             <div style={{
                 flex: 1,
                 background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)',
-                display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -200,14 +199,13 @@ const Login = () => {
 
             {/* Panel derecho - formulario */}
             <div style={{
-                flex: '0 0 420px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: '#f8fafc',
                 padding: '2rem'
             }}
-            className="flex-1 md:flex-none"
+            className="flex-1 md:flex-none md:w-[420px]"
             >
                 <div style={{ width: '100%', maxWidth: '380px' }}>
                     {/* Logo solo visible en móvil */}

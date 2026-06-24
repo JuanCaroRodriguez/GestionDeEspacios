@@ -916,14 +916,14 @@ const GestionEspacios = () => {
                             }}
                         >
                             <FiLogOut style={{ width: '16px', height: '16px' }} />
-                            Cerrar sesión
+                            <span className="hidden sm:inline">Cerrar sesión</span>
                         </button>
                     </div>
                 </div>
 
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
 
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap gap-2 items-center justify-between mb-6">
 
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <FiHome className="w-6 h-6" />
@@ -1327,7 +1327,7 @@ const GestionEspacios = () => {
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
 
-                <div>
+                <div className="overflow-x-auto">
 
                     <table className="w-full divide-y divide-gray-200">
 

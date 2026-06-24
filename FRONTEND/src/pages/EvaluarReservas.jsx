@@ -355,11 +355,11 @@ const EvaluarReservas = () => {
                             }}
                         >
                             <FiLogOut style={{ width: '16px', height: '16px' }} />
-                            Cerrar sesión
+                            <span className="hidden sm:inline">Cerrar sesión</span>
                         </button>
                     </div>
                 </div>
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                     <div className="bg-white p-4 rounded-lg shadow">
@@ -536,7 +536,7 @@ const EvaluarReservas = () => {
                         <h2 className="text-lg font-semibold text-gray-900">Todas las Reservas</h2>
                         <span className="text-sm text-gray-500">{reservasFiltradas.length} resultado(s)</span>
                     </div>
-                    <div>
+                    <div className="overflow-x-auto">
                         <table className="w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>

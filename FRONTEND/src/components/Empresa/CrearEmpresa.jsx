@@ -414,7 +414,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                         <div style={{ position: 'absolute', top: '30%', left: '15%', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(147,197,253,0.15)', animation: 'ceFloat2 8s ease-in-out infinite 1s', pointerEvents: 'none' }} />
                     </>
                 )}
-                <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-md">
                     {/* Indicadores de paso */}
                     <div className="flex items-center justify-center mb-8">
                         <div className="flex items-center">
@@ -531,7 +531,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                         <div style={{ position: 'absolute', top: '30%', left: '15%', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(147,197,253,0.15)', animation: 'ceFloat2 8s ease-in-out infinite 1s', pointerEvents: 'none' }} />
                     </>
                 )}
-                <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl">
+                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-4xl">
                     {/* Indicadores de paso */}
                     <div className="flex items-center justify-center mb-8">
                         <div className="flex items-center">
@@ -665,7 +665,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                     <div style={{ position: 'absolute', top: '30%', left: '15%', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(147,197,253,0.15)', animation: 'ceFloat2 8s ease-in-out infinite 1s', pointerEvents: 'none' }} />
                 </>
             )}
-            <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-4xl">
                 {/* Indicadores de paso */}
                 <div className="flex items-center justify-center mb-8">
                     <div className="flex items-center">
@@ -716,7 +716,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                     disabled={loading}
                                 />
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <select
                                     name="departamento"
                                     value={bloqueForm.departamento}
@@ -734,7 +734,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                 </select>
                                 <button
                                     onClick={handleCrearBloque}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                                     disabled={loading}
                                 >
                                     + Añadir Bloque
@@ -802,8 +802,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                     {/* Formulario añadir piso */}
                                     <div className="border-t pt-3">
                                         <div className="space-y-2">
-                                            <div className="flex items-center space-x-2">
-                                                <label className="text-xs font-medium text-gray-600 w-19">#Piso:</label>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <label className="text-xs font-medium text-gray-600">#Piso:</label>
                                                 <div className="flex items-center">
                                                     <button
                                                         onClick={() => {
@@ -837,8 +837,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex items-center space-x-2">
-                                                <label className="text-xs font-medium text-gray-600 w-19">Total de espacios del piso:</label>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <label className="text-xs font-medium text-gray-600">Nº espacios:</label>
                                                 <div className="flex items-center">
                                                     <button
                                                         onClick={() => {
@@ -873,8 +873,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex items-center space-x-2 mt-2">
-                                                <label className="text-xs font-medium text-gray-600 w-12">Capacidad:</label>
+                                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                <label className="text-xs font-medium text-gray-600">Capacidad:</label>
                                                 <div className="flex items-center">
                                                     <button
                                                         onClick={() => {

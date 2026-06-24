@@ -328,7 +328,7 @@ const GestionAdministradores = () => {
 
     return (
         <DashboardLayout title="Gestión de Administradores">
-            <div style={{ backgroundColor: '#f8fafc', minHeight: '100%' }}>
+            <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', overflowX: 'hidden' }}>
                 <style>{`
                   @keyframes gaFloat1 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
                   @keyframes gaFloat2 { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(18px); } }
@@ -373,17 +373,17 @@ const GestionAdministradores = () => {
                             }}
                         >
                             <FiLogOut style={{ width: '16px', height: '16px' }} />
-                            Cerrar sesión
+                            <span className="hidden sm:inline">Cerrar sesión</span>
                         </button>
                     </div>
                 </div>
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
+            <div className="p-3 sm:p-6">
+                <div className="flex flex-wrap gap-2 items-center justify-between mb-6">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                         <FiUsers className="w-6 h-6 mr-2" />
                         Gestión de Administradores
                     </h1>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => window.location.reload()}
                             className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
@@ -447,7 +447,7 @@ const GestionAdministradores = () => {
 
                 {/* Lista de Administradores */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div>
+                    <div className="overflow-x-auto">
                         <table className="w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>

@@ -5,7 +5,7 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const DashboardLayout = ({ children, title }) => {
     const { session } = useSession();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
 
     // Atajo de teclado para toggle sidebar (Ctrl+B o Cmd+B)
     useEffect(() => {
