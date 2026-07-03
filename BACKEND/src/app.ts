@@ -38,23 +38,6 @@ const port = process.env.PORT || 3001;
 // Usar las rutas principales
 app.use("/api", routes);
 
-// Ruta raíz
-app.get("/", (req, res) => {
-  res.json({
-    message: "API de Gestión de Espacios funcionando",
-    version: "1.0.0",
-    endpoints: {
-      auth: "/api/auth (login/perfil)",
-      usuarios: "/api/usuarios (solo lectura)",
-      espacios: "/api/espacios (solo lectura)",
-      reservas: "/api/reservas (solo lectura)",
-      superadmin: "/api/superadmin (gestión usuarios/espacios)",
-      administrador: "/api/administrador (evaluar reservas)",
-      health: "/api/health",
-    },
-  });
-});
-
 // Iniciar conexión a la base de datos y luego el servidor
 async function startServer() {
   try {
