@@ -155,11 +155,11 @@ const GestionEspacios = () => {
 
                 setDepartamentos(departamentosData);
 
-                console.log('Espacios cargados:', espaciosData);
+                
 
-                console.log('Bloques cargados:', bloquesData);
+                
 
-                console.log('Empresa:', idEmpresa);
+                
 
             } catch (err) {
 
@@ -258,7 +258,7 @@ const GestionEspacios = () => {
 
             // Crear nuevo espacio en la API
 
-            console.log("Datos de creación: ",formData)
+            
             const nuevoEspacio = {
 
                 ...formData,
@@ -282,7 +282,7 @@ const GestionEspacios = () => {
 
             const response = await espaciosService.create(nuevoEspacio);
 
-            console.log('Espacio creado:', response);
+            
 
             
 
@@ -344,7 +344,7 @@ const GestionEspacios = () => {
 
             ));
 
-            console.log('Disponibilidad actualizada para el espacio:', id);
+            
 
         } catch (error) {
 
@@ -367,7 +367,7 @@ const GestionEspacios = () => {
         try {
             await espaciosService.delete(espacioToDelete);
             setEspacios(espacios.filter(espacio => espacio.id !== espacioToDelete));
-            console.log('Espacio eliminado:', espacioToDelete);
+            
             
             // Cerrar modal de confirmación y mostrar modal de éxito
             setShowDeleteConfirmModal(false);
@@ -487,7 +487,7 @@ const GestionEspacios = () => {
 
 
             // Actualizar espacio en la API
-            console.log("Datos de edición:",editFormData)
+            
             const espacioActualizado = {
 
                 ...editFormData,
@@ -506,7 +506,7 @@ const GestionEspacios = () => {
 
             const response = await espaciosService.update(editFormData.id, espacioActualizado);
 
-            console.log('Espacio actualizado:', response);
+            
 
             
 

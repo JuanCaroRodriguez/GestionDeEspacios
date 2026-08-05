@@ -41,7 +41,7 @@ const Login = () => {
             .then((response) => {
 
                 if(response.estado === 'sin errores') {   
-                    console.log(response.user)                 
+                    
                     setShowSuccessModal(true)
                     return
                 }

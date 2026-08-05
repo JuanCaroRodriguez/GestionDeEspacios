@@ -1,12 +1,10 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import axiosInstance from "../axios";
 
 const reservasService = {
   // Obtener todas las reservas
   async getAll() {
     try {
-      const response = await axios.get(`${API_URL}/api/reservas`);
+      const response = await axiosInstance.get(`/reservas`);
       return response.data;
     } catch (error) {
       console.error("Error al obtener reservas:", error);
@@ -17,8 +15,8 @@ const reservasService = {
   // Obtener reservas por espacio
   async getByEspacio(espacioId, id_empresa) {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/reservas/espacio/${espacioId}`,
+      const response = await axiosInstance.get(
+        `/reservas/espacio/${espacioId}`,
         {
           params: { id_empresa },
         },
@@ -33,8 +31,8 @@ const reservasService = {
   // Obtener todas las reservas de la empresa
   async getAllByEmpresa(id_empresa) {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/reservas/empresa/${id_empresa}`,
+      const response = await axiosInstance.get(
+        `/reservas/empresa/${id_empresa}`,
       );
       return response.data;
     } catch (error) {
@@ -46,10 +44,9 @@ const reservasService = {
   // Obtener reservas por persona
   async getByPersona(personaId) {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/reservas/persona/${personaId}`,
+      const response = await axiosInstance.get(
+        `/reservas/persona/${personaId}`,
       );
-      console.log("traje:", response);
       return response.data;
     } catch (error) {
       console.error("Error al obtener reservas de la persona:", error);
@@ -60,7 +57,7 @@ const reservasService = {
   // Crear nueva reserva
   async create(reservaData) {
     try {
-      const response = await axios.post(`${API_URL}/api/reservas`, reservaData);
+      const response = await axiosInstance.post(`/reservas`, reservaData);
       return response.data;
     } catch (error) {
       console.error("Error al crear reserva:", error);
@@ -71,8 +68,8 @@ const reservasService = {
   // Verificar disponibilidad
   async verificarDisponibilidad(datos) {
     try {
-      const response = await axios.post(
-        `${API_URL}/api/disponibilidad/verificar`,
+      const response = await axiosInstance.post(
+        `/disponibilidad/verificar`,
         datos,
       );
       return response.data;
@@ -91,8 +88,8 @@ const reservasService = {
         id_empresa,
         ...opciones,
       };
-      const response = await axios.get(
-        `${API_URL}/api/disponibilidad/horarios-disponibles`,
+      const response = await axiosInstance.get(
+        `/disponibilidad/horarios-disponibles`,
         { params },
       );
       return response.data;
@@ -105,7 +102,7 @@ const reservasService = {
   // Crear reserva
   async create(reservaData) {
     try {
-      const response = await axios.post(`${API_URL}/api/reservas`, reservaData);
+      const response = await axiosInstance.post(`/reservas`, reservaData);
       return response.data;
     } catch (error) {
       console.error("Error al crear reserva:", error);
@@ -116,9 +113,7 @@ const reservasService = {
   // Cancelar reserva
   async cancelar(id) {
     try {
-      const response = await axios.put(
-        `${API_URL}/api/reservas/${id}/cancelar`,
-      );
+      const response = await axiosInstance.put(`/reservas/${id}/cancelar`);
       return response.data;
     } catch (error) {
       console.error("Error al cancelar reserva:", error);
@@ -259,8 +254,8 @@ const reservasService = {
   // Cancelar reserva
   async cancelReserva(reservaId) {
     try {
-      const response = await axios.put(
-        `${API_URL}/api/reservas/${reservaId}/cancelar`,
+      const response = await axiosInstance.put(
+        `/reservas/${reservaId}/cancelar`,
       );
       return response.data;
     } catch (error) {
@@ -274,8 +269,8 @@ const reservasService = {
     try {
       const body = { estado: nuevoEstado };
       if (motivo_cancelacion) body.motivo_cancelacion = motivo_cancelacion;
-      const response = await axios.put(
-        `${API_URL}/api/reservas/${reservaId}/estado`,
+      const response = await axiosInstance.put(
+        `/reservas/${reservaId}/estado`,
         body,
       );
       return response.data;

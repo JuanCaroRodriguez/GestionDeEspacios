@@ -79,13 +79,10 @@ function SessionState({ children }) {
   const handleUpdate = useCallback(async (data) => {
     try {
       setLoading(true)
-      // console.log(data, 'data update')
       const response = await API_PROTOTYPES.auth.update(data)
       setLoading(false)
       if (response?.token) {
         guardarEnLocalStorage('session', response)
-        // alert('Datos actualizados')
-        console.log(response, 'response')
         setSession(response)
       }
       return response

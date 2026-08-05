@@ -24,7 +24,7 @@ function Register() {
 
 
   const onSubmit = (formData) => {
-    console.log(formData)
+    
     let registerPromise;
     
     // Seleccionar el método de registro según el rol

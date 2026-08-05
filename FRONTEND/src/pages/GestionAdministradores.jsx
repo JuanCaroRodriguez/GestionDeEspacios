@@ -145,7 +145,7 @@ const GestionAdministradores = () => {
             };
 
             const response = await administradoresService.create(nuevoAdministrador);
-            console.log('Administrador creado:', response);
+            
             
             // Actualizar estado local
             setAdministradores([...administradores, response]);
@@ -197,7 +197,7 @@ const GestionAdministradores = () => {
             }
 
             const response = await administradoresService.update(editAdminId, updateData);
-            console.log('Administrador actualizado:', response);
+            
             
             // Actualizar estado local
             setAdministradores(administradores.map(admin => 
@@ -234,7 +234,7 @@ const GestionAdministradores = () => {
             
             // Llamar al endpoint para cambiar estado
             await administradoresService.updateEstado(id, nuevoEstado);
-            console.log('Estado actualizado para el administrador:', id, 'nuevo estado:', nuevoEstado);
+            
             
             // Actualizar estado local
             setAdministradores(administradores.map(admin => 
@@ -256,7 +256,7 @@ const GestionAdministradores = () => {
             await administradoresService.delete(adminToDelete); // Reutilizar el mismo endpoint
             // Actualizar estado local
             setAdministradores(administradores.filter(admin => admin.id !== adminToDelete));
-            console.log('Administrador eliminado:', adminToDelete);
+            
             
             // Cerrar modal de confirmación y mostrar modal de éxito
             setShowDeleteConfirmModal(false);

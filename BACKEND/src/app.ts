@@ -16,11 +16,22 @@ console.clear();
 const app = express();
 app.use(express.json());
 
-const allowedOrigins = ["http://localhost:5174/", "http://localhost:5174", "*"];
+const allowedOrigins = [
+  "http://localhost:5174",
+  "http://localhost:5174/",
+  "http://localhost:3000",
+];
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Permitir localhost y cualquier dominio trycloudflare.com
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.includes(origin.replace(/\/$/, "")) ||
+        origin.endsWith(".trycloudflare.com")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));

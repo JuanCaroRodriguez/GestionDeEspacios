@@ -131,7 +131,7 @@ const GestionUsuarios = () => {
             };
 
             const response = await usuariosService.create(nuevoUsuario);
-            console.log('Usuario creado:', response);
+            
             
             // Actualizar estado local
             setUsuarios([...usuarios, response]);
@@ -169,7 +169,7 @@ const GestionUsuarios = () => {
                 u.id === id ? { ...u, estado: nuevoEstado } : u
             ));
             
-            console.log('Estado actualizado:', response);
+            
         } catch (error) {
             console.error('Error al actualizar estado:', error);
             alert('Error al actualizar el estado del usuario');
@@ -221,7 +221,7 @@ const GestionUsuarios = () => {
             }
 
             const response = await usuariosService.update(editUserId, updateData);
-            console.log('Usuario actualizado:', response);
+            
             
             // Actualizar estado local
             setUsuarios(usuarios.map(usuario => 
@@ -259,7 +259,7 @@ const GestionUsuarios = () => {
             await usuariosService.delete(usuarioToDelete);
             // Actualizar estado local
             setUsuarios(usuarios.filter(usuario => usuario.id !== usuarioToDelete));
-            console.log('Usuario eliminado:', usuarioToDelete);
+            
             
             // Cerrar modal de confirmación y mostrar modal de éxito
             setShowDeleteConfirmModal(false);

@@ -12,7 +12,6 @@ function Table({ config }) {
 
     const sortByCol = useCallback(
         (key) => {
-            console.log("Sorting by", key);
 
             const newSortedData = [...dataTable]; // Crear una copia para evitar mutaciones
 

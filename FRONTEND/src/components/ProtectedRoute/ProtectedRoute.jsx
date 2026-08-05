@@ -14,23 +14,15 @@ const ProtectedRoute = ({ children, requireEmpresa = false }) => {
         const verificarEmpresa = async () => {
             // Leer sesión directamente del localStorage para tener datos actualizados
             const localSession = JSON.parse(localStorage.getItem('session'));
-            
-            console.log('ProtectedRoute - Verificando empresa:', {
-                requireEmpresa,
-                contextSession: session,
-                localSession: localSession,
-                userTipo: localSession?.user?.tipo,
-                id_empresa: localSession?.user?.id_empresa
-            });
-            
+                        
             // Solo verificar si se requiere empresa y es superadmin
             if (requireEmpresa && localSession?.user?.tipo === 'superadmin') {
                 // Usar directamente el id_empresa de la sesión local
                 if (localSession.user.id_empresa) {
-                    console.log('ProtectedRoute - Empresa encontrada:', localSession.user.id_empresa);
+                    
                     setEmpresa({ id: localSession.user.id_empresa });
                 } else {
-                    console.log('ProtectedRoute - Sin empresa para superadmin');
+                    
                     setEmpresa(null);
                 }
             }
@@ -64,16 +56,8 @@ const ProtectedRoute = ({ children, requireEmpresa = false }) => {
     // Leer sesión actual del localStorage para la decisión
     const currentSession = JSON.parse(localStorage.getItem('session'));
     
-    // Si se requiere empresa y es superadmin sin empresa, redirigir al dashboard
-    console.log('ProtectedRoute - Decisión de bloqueo:', {
-        requireEmpresa,
-        userTipo: currentSession?.user?.tipo,
-        empresa: empresa,
-        bloquear: requireEmpresa && currentSession?.user?.tipo === 'superadmin' && !empresa
-    });
-    
     if (requireEmpresa && currentSession?.user?.tipo === 'superadmin' && !empresa) {
-        console.log('ProtectedRoute - Bloqueando acceso');
+        
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
