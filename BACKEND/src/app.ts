@@ -25,17 +25,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permitir localhost y cualquier dominio trycloudflare.com
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        allowedOrigins.includes(origin.replace(/\/$/, "")) ||
-        origin.endsWith(".trycloudflare.com")
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
+      callback(null, true);
     },
     optionsSuccessStatus: 200,
     credentials: true,

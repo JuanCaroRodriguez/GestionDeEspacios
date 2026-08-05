@@ -1,18 +1,26 @@
 import AuthToken from '@/api/AuthToken'
 import { ROUTES } from '@/tools/CONSTANTS'
 import { node } from '@/tools/Types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from "react-router-dom"
 import { API_PROTOTYPES } from '../../api/services'
 import { guardarEnLocalStorage } from '../../tools/utils'
 import SessionContext from './SessionContext'
+
+const decodeJwt = (token) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    return null
+  }
+}
 
 function SessionState({ children }) {
 
   const [session, setSession] = useState()
   const [loading_auth, setLoading] = useState(false)
   const navigate = useNavigate()
-
+  const logoutTimerRef = useRef(null)
 
   const handleLogin = useCallback(async (data) => {
     try {
@@ -99,6 +107,29 @@ function SessionState({ children }) {
     handleAuthVerify()
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current)
+      logoutTimerRef.current = null
+    }
+    if (session?.token) {
+      const decoded = decodeJwt(session.token)
+      if (decoded?.exp) {
+        const msUntilExpiry = decoded.exp * 1000 - Date.now()
+        if (msUntilExpiry > 0) {
+          logoutTimerRef.current = setTimeout(() => {
+            handleLogOut()
+          }, msUntilExpiry)
+        } else {
+          handleLogOut()
+        }
+      }
+    }
+    return () => {
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current)
+    }
+  }, [session, handleLogOut])
 
   return (
     <SessionContext.Provider value={{

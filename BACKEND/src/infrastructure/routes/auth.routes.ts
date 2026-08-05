@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { UsuarioRepository } from "../repositories/Usuario.repository";
 import { SuperAdminRepository } from "../repositories/SuperAdmin.repository";
 import { AdministradorRepository } from "../repositories/Administrador.repository";
+import { generateToken } from "../utils/jwt.handle";
 
 const router = Router();
 const usuarioRepository = new UsuarioRepository();
@@ -119,7 +120,7 @@ router.post("/login", async (req, res) => {
         estado: "sin errores",
         message: "Login exitoso",
         user: userData,
-        token: `mock-jwt-token-${user.getId()}`,
+        token: generateToken(userData),
       });
     }
 
@@ -138,7 +139,7 @@ router.post("/login", async (req, res) => {
       estado: "sin errores",
       message: "Login exitoso",
       user: userData,
-      token: `mock-jwt-token-${user.getId()}`,
+      token: generateToken(userData),
     });
   } catch (error) {
     console.error("Error en login:", error);
