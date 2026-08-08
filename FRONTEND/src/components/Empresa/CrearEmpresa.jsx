@@ -6,6 +6,10 @@ import bloquesService from '../../api/services/bloques.service';
 
 import { departamentosService } from '../../api/services/departamentos.service';
 
+import intervalosService from '../../api/services/intervalos.service';
+
+import ConfigurarIntervalos from '../Intervalos/ConfigurarIntervalos';
+
 import { FiInfo, FiPlus, FiTrash2 } from "react-icons/fi";
 
 import SweetAlert2 from 'react-sweetalert2';   
@@ -14,7 +18,7 @@ import SweetAlert2 from 'react-sweetalert2';
 
 const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
-    const [paso, setPaso] = useState(1); // 1: Datos empresa, 2: Departamentos, 3: Crear bloques
+    const [paso, setPaso] = useState(1); // 1: Datos empresa, 2: Departamentos, 3: Crear bloques, 4: Franjas horarias
 
     const [empresaData, setEmpresaData] = useState({
 
@@ -51,6 +55,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
     const [swalProps, setSwalProps] = useState({});
 
     const [alertKey, setAlertKey] = useState(0); // Key para forzar el re-render
+
+    const [intervalosConfig, setIntervalosConfig] = useState([]);
 
 
 
@@ -538,7 +544,8 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
 
 
-    const handleFinalizar = async () => {
+    // Paso 3 → 4: solo valida bloques y avanza
+    const handleAvanzarAIntervalos = () => {
 
         if (bloques.length === 0) {
 
@@ -550,8 +557,6 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
 
 
-        // Verificar que todos los bloques tengan al menos un piso
-
         const bloquesSinPisos = bloques.filter(b => b.pisos.length === 0);
 
         if (bloquesSinPisos.length > 0) {
@@ -562,7 +567,16 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
         }
 
+        setError('');
 
+        setPaso(4);
+
+    };
+
+    // Paso 4: recibe intervalos confirmados y persiste todo
+    const handleCompletarCreacion = async (intervalosConfirmados) => {
+
+        setIntervalosConfig(intervalosConfirmados);
 
         try {
 
@@ -687,7 +701,27 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
 
 
-            // 5. Esperar un momento y luego limpiar sesión y redirigir al login
+            // 5. Guardar intervalos horarios
+
+            try {
+
+                if (intervalosConfirmados && intervalosConfirmados.length > 0) {
+
+                    await intervalosService.guardar(empresaCreada.id, intervalosConfirmados);
+
+                }
+
+            } catch (intErr) {
+
+                console.error('Error al guardar intervalos:', intErr);
+
+                // No bloquear el flujo
+
+            }
+
+
+
+            // 6. Esperar un momento y luego limpiar sesión y redirigir al login
 
             setTimeout(() => {
 
@@ -1263,7 +1297,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
     // Renderizar paso 3: Crear bloques
 
-    return (
+    if (paso === 3) { return (
 
         <>
 
@@ -1845,7 +1879,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
                         <button
 
-                            onClick={handleFinalizar}
+                            onClick={handleAvanzarAIntervalos}
 
                             className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 
@@ -1871,7 +1905,7 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
                             ) : (
 
-                                'Finalizar Configuración'
+                                'Siguiente: Franjas Horarias'
 
                             )}
 
@@ -1891,9 +1925,61 @@ const CrearEmpresa = ({ onEmpresaCreada, onCancelar, fullscreen = true }) => {
 
     );
 
+    }
+
+    // ── Paso 4: Configurar franjas horarias ─────────────────────────────────
+    if (paso === 4) {
+        return (
+            <>
+                <div style={fullscreen ? { minHeight: '100vh', background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 40%, #1d4ed8 75%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', position: 'relative', overflow: 'hidden' } : {}}>
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-full" style={{ maxWidth: '720px' }}>
+
+                        {/* Indicadores de paso */}
+                        <div className="flex items-center justify-center mb-6">
+                            <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4].map(n => (
+                                    <div key={n} className="flex items-center">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${n < 4 ? 'bg-green-500 text-white' : 'bg-blue-600 text-white'}`}>{n}</div>
+                                        {n < 4 && <div className="w-10 h-1 bg-green-500"></div>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="text-center mb-5">
+                            <h2 className="text-xl font-bold text-gray-900">Paso 4: Franjas horarias</h2>
+                            <p className="text-gray-500 text-sm mt-1">
+                                Define los horarios disponibles para reservas en <strong>{empresaData.nombre}</strong>.
+                            </p>
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">{error}</div>
+                        )}
+
+                        <ConfigurarIntervalos
+                            titulo="Franjas horarias de la empresa"
+                            intervalosIniciales={intervalosConfig}
+                            onCancelar={() => setPaso(3)}
+                            onConfirmar={handleCompletarCreacion}
+                        />
+
+                        {loading && (
+                            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                                <div className="bg-white rounded-lg p-6 text-center shadow-xl">
+                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                                    <p className="text-gray-700 font-medium">Creando empresa...</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <SweetAlert2 key={alertKey} {...swalProps} />
+            </>
+        );
+    }
+
 };
-
-
 
 export default CrearEmpresa;
 

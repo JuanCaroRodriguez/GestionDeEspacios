@@ -9,6 +9,7 @@ import empresaRoutes from "./empresa.routes";
 import bloqueRoutes from "./bloque.routes";
 import disponibilidadRoutes from "./disponibilidad.routes";
 import departamentoRoutes from "./departamentos.routes";
+import intervalosRoutes from "./intervalos.routes";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use("/usuarios", usuarioRoutes);
 router.use("/espacios", espacioRoutes);
 router.use("/reservas", reservaRoutes);
 router.use("/empresas", empresaRoutes);
+router.use("/empresas/:idEmpresa/intervalos", intervalosRoutes);
 router.use("/bloques", bloqueRoutes);
 router.use("/departamentos", departamentoRoutes);
 router.use("/superadmin", superadminRoutes);

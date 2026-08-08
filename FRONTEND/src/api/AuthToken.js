@@ -1,31 +1,27 @@
 import { obtenerDeLocalStorage } from "../tools/utils";
 import axiosInstance from "./axios";
 
-let requestInterceptorId = null;
-
-const AuthToken = async () => {
-  const session = obtenerDeLocalStorage("session");
-
-  // Si hay un token, agrega el interceptor de solicitud
-  if (session) {
-    // Agregar interceptor de solicitud
-    requestInterceptorId = axiosInstance.interceptors.request.use(
-      (config) => {
+// Interceptor registrado UNA vez al cargar el módulo.
+// Lee el token de localStorage sincrónicamente en cada petición.
+axiosInstance.interceptors.request.use(
+  (config) => {
+    try {
+      const raw = localStorage.getItem("session");
+      const session = raw ? JSON.parse(raw) : null;
+      if (session?.token) {
         config.headers["Authorization"] = session.token;
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      },
-    );
-  } else {
-    // Si no hay token, eliminar el interceptor de solicitud si existe
-    if (requestInterceptorId !== null) {
-      axiosInstance.interceptors.request.eject(requestInterceptorId);
-      requestInterceptorId = null;
+      }
+    } catch {
+      /* localStorage no disponible (SSR/test) */
     }
-  }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
+// AuthToken sigue disponible para la verificación de sesión en SessionState
+const AuthToken = async () => {
+  const session = await obtenerDeLocalStorage("session");
   return session;
 };
 

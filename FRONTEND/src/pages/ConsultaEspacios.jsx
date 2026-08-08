@@ -6,9 +6,11 @@ import reservasService from '@api/services/reservas.service';
 import { departamentosService } from '@api/services/departamentos.service';
 import useSession from '../context/Auth/useSession';
 import { toast } from 'sonner';
-import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo, FiLogOut} from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiX, FiMap, FiMapPin, FiTag, FiUsers, FiInfo, FiLogOut, FiClock } from 'react-icons/fi';
 import { FaRegBuilding } from "react-icons/fa";
 import ModalResumenReserva from '@components/ModalResumenReserva';
+import intervalosService from '@api/services/intervalos.service';
+import ConfigurarIntervalos from '@components/Intervalos/ConfigurarIntervalos';
 
 const ConsultaDisponibilidad = () => {
     const { session } = useSession();
@@ -40,27 +42,19 @@ const ConsultaDisponibilidad = () => {
     const [resumenReserva, setResumenReserva] = useState(null);
     const [conflictoEspacio, setConflictoEspacio] = useState(null);
 
-    // Franjas horarias
-    const timeSlots = [
-        '07:00AM - 07:50AM',
-        '07:50AM - 08:40AM', 
-        '08:40AM - 09:30AM',
-        '09:30AM - 10:20AM',
-        '10:20AM - 11:10AM',
-        '11:10AM - 12:00PM',
-        '12:00PM - 12:50PM',
-        '01:00PM - 01:50PM',
-        '01:50PM - 02:40PM',
-        '02:40PM - 03:30PM',
-        '03:30PM - 04:20PM',
-        '04:20PM - 05:10PM',
-        '05:10PM - 06:00PM',
-        '06:00PM - 06:50PM',
-        '06:50PM - 07:40PM',
-        '07:40PM - 08:30PM',
-        '08:30PM - 09:20PM',
-        '09:20PM - 10:00PM'
-    ];
+    // Franjas horarias dinámicas (desde la BD por empresa)
+    const [intervalos, setIntervalos] = useState([]);
+    const [loadingIntervalosConfig, setLoadingIntervalosConfig] = useState(false);
+    const [showModificarIntervalos, setShowModificarIntervalos] = useState(false);
+
+    // Derivar timeSlots desde los intervalos cargados
+    const timeSlots = intervalos.map(i => `${i.hora_inicio} - ${i.hora_fin}`);
+
+    // Formato de display AM/PM para una franja
+    const formatSlotDisplay = (slot) => {
+        const [inicio, fin] = slot.split(' - ');
+        return `${intervalosService.formatearHora(inicio)} - ${intervalosService.formatearHora(fin)}`;
+    };
 
     const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -180,13 +174,20 @@ const ConsultaDisponibilidad = () => {
         const fecha = weekDates[d];
         const { horaInicio } = reservasService.timeSlotToHoras(slot);
 
-        const match = horaInicio.match(/(\d+):(\d+)(AM|PM)/i);
-        if (!match) return false;
-        let h = parseInt(match[1], 10);
-        const m = parseInt(match[2], 10);
-        const periodo = match[3].toUpperCase();
-        if (periodo === 'PM' && h !== 12) h += 12;
-        if (periodo === 'AM' && h === 12) h = 0;
+        let h, m;
+        const matchAmPm = horaInicio.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (matchAmPm) {
+            h = parseInt(matchAmPm[1], 10);
+            m = parseInt(matchAmPm[2], 10);
+            const periodo = matchAmPm[3].toUpperCase();
+            if (periodo === 'PM' && h !== 12) h += 12;
+            if (periodo === 'AM' && h === 12) h = 0;
+        } else {
+            const match24 = horaInicio.match(/^(\d{1,2}):(\d{2})$/);
+            if (!match24) return false;
+            h = parseInt(match24[1], 10);
+            m = parseInt(match24[2], 10);
+        }
 
         const slotDate = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), h, m);
         return slotDate < ahoraColombia();
@@ -696,11 +697,12 @@ const ConsultaDisponibilidad = () => {
                     return;
                 }
                 
-                // Cargar espacios, bloques y departamentos en paralelo
-                const [espaciosData, bloquesData, departamentosData] = await Promise.all([
+                // Cargar espacios, bloques, departamentos e intervalos en paralelo
+                const [espaciosData, bloquesData, departamentosData, intervalosData] = await Promise.all([
                     espaciosService.getByEmpresa(idEmpresa),
                     bloquesService.getByIdEmpresa(idEmpresa),
-                    departamentosService.getByEmpresa(idEmpresa)
+                    departamentosService.getByEmpresa(idEmpresa),
+                    intervalosService.getByEmpresa(idEmpresa).catch(() => [])
                 ]);
                 
                 // Filtrar espacios según el rol del usuario
@@ -741,6 +743,7 @@ const ConsultaDisponibilidad = () => {
                 setEspacios(espaciosFiltrados);
                 setBloques(bloquesData);
                 setDepartamentos(departamentosData);
+                setIntervalos(intervalosData || []);
                 
                 
             } catch (err) {
@@ -1047,6 +1050,18 @@ const ConsultaDisponibilidad = () => {
                     
 
                     {/* Navegación de semanas */}
+                    {/* Botón Modificar franjas — solo superadmin */}
+                    {session?.user?.tipo === 'superadmin' && (
+                        <div className="mb-3 flex justify-end">
+                            <button
+                                onClick={() => setShowModificarIntervalos(true)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
+                            >
+                                <FiClock size={14} /> Modificar franjas horarias
+                            </button>
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-lg shadow p-4 mb-4">
                         <div className="flex items-center justify-between">
                             <button
@@ -1109,6 +1124,21 @@ const ConsultaDisponibilidad = () => {
                         </div>
                     )}
 
+                    {/* Estado vacío cuando no hay intervalos configurados */}
+                    {timeSlots.length === 0 && !loading && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center mb-4">
+                            <p className="text-yellow-800 font-medium mb-1">Esta empresa no tiene franjas horarias configuradas.</p>
+                            {session?.user?.tipo === 'superadmin' && (
+                                <button
+                                    onClick={() => setShowModificarIntervalos(true)}
+                                    style={{ marginTop: '0.5rem', padding: '0.45rem 1rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
+                                >
+                                    Configurar franjas horarias
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-lg shadow overflow-auto relative">
                         {loadingReservas && (
                             <div className="absolute inset-0 bg-white/75 z-10 flex flex-col items-center justify-center rounded-lg gap-3">
@@ -1136,7 +1166,7 @@ const ConsultaDisponibilidad = () => {
                                 {timeSlots.map((slot, slotIndex) => (
                                     <tr key={slotIndex} className="hover:bg-gray-50">
                                         <td className="px-4 py-3 text-sm font-medium text-gray-900 border">
-                                            {slot}
+                                            {formatSlotDisplay(slot)}
                                         </td>
                                         {days.map((day, dayIndex) => {
                                             const ocupado = estaOcupado(day, slot);
@@ -1220,6 +1250,29 @@ const ConsultaDisponibilidad = () => {
                     onClose={() => setShowResumenModal(false)}
                     resumen={resumenReserva}
                 />
+
+                {/* Modal modificar franjas horarias */}
+                {showModificarIntervalos && (
+                    <ConfigurarIntervalos
+                        modoModal={true}
+                        titulo={`Franjas horarias`}
+                        intervalosIniciales={intervalos}
+                        onCancelar={() => setShowModificarIntervalos(false)}
+                        onConfirmar={async (nuevos) => {
+                            try {
+                                setLoadingIntervalosConfig(true);
+                                await intervalosService.guardar(session.user.id_empresa, nuevos);
+                                setIntervalos(nuevos);
+                                setShowModificarIntervalos(false);
+                                toast.success('Franjas horarias actualizadas');
+                            } catch (err) {
+                                toast.error(err.response?.data?.error || 'Error al guardar las franjas');
+                            } finally {
+                                setLoadingIntervalosConfig(false);
+                            }
+                        }}
+                    />
+                )}
             </DashboardLayout>
         );
     }

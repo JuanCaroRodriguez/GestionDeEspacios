@@ -31,6 +31,7 @@ function SessionState({ children }) {
       
       if (response && (response.success || response.token || response.user)) {
         guardarEnLocalStorage('session', response)
+        await AuthToken()   // registra el interceptor con el token recién obtenido
         setSession(response)
         
       } else {
