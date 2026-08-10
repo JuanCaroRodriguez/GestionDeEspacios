@@ -234,7 +234,7 @@ const Login = () => {
                                     outline: 'none', boxSizing: 'border-box'
                                 }}
                             >
-                                <option value="usuario">Usuario (Estudiante o Docente)</option>
+                                <option value="usuario">Usuario </option>
                                 <option value="administrador">Administrador</option>
                                 <option value="superadmin">Super Administrador</option>
                             </select>
