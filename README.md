@@ -277,9 +277,17 @@ npm run dev
 
 ---
 
-## [Licencia]
+## [Licencia y Propiedad Intelectual]
 
-Este proyecto está desarrollado como parte de proyectos académicos y está disponible para uso educativo y de investigación.
+Este proyecto ha sido desarrollado como Trabajo de Grado para optar al título profesional en la **Universidad de Cartagena** y se distribuye bajo la **Licencia MIT**.
+
+### Términos de Uso Institucional:
+* **Uso y Modificación:** Se concede autorización gratuita a la **Universidad de Cartagena** para la implementación, despliegue, uso y modificación interna del aplicativo en sus procesos académicos y administrativos.
+* **Reserva de Autoría:** Bajo los términos de la Licencia MIT y la legislación de derechos de autor, **es obligatorio mantener intactos los nombres de los autores originales** en cualquier copia, servidor, interfaz de usuario o derivación del software.
+* **Restricción Comercial:** Queda estrictamente prohibida su comercialización, venta o explotación lucrativa por terceros sin el consentimiento expreso y por escrito de los creadores.
+
+Para consultar los términos legales completos, revise el archivo `LICENSE` en la raíz de este repositorio.
+
 
 ---
 
